@@ -1,0 +1,52 @@
+{"frames": {
+
+"enemy.png":
+{
+	"frame": {"x":17,"y":353,"w":71,"h":62},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":71,"h":62},
+	"sourceSize": {"w":71,"h":62}
+},
+"play_button.png":
+{
+	"frame": {"x":17,"y":1,"w":132,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":132,"h":132},
+	"sourceSize": {"w":132,"h":132}
+},
+"refresh_button.png":
+{
+	"frame": {"x":17,"y":135,"w":107,"h":107},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":0,"w":107,"h":107},
+	"sourceSize": {"w":110,"h":110}
+},
+"revive_button.png":
+{
+	"frame": {"x":17,"y":244,"w":107,"h":107},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":0,"w":107,"h":107},
+	"sourceSize": {"w":109,"h":110}
+},
+"texture_sky.png":
+{
+	"frame": {"x":1,"y":1,"w":14,"h":482},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":14,"h":482},
+	"sourceSize": {"w":14,"h":482}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "ui.png",
+	"format": "RGBA8888",
+	"size": {"w":150,"h":484},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:ee8ac746286d4c839a0427b7c89ba627:7b98baae4d22e307205c4f6bc59b65e5:5b04aa198265472a3c5f56958d78e97b$"
+}
+}
