@@ -37708,23 +37708,23 @@
 	
 	var _plugins2 = _interopRequireDefault(_plugins);
 	
-	var _config = __webpack_require__(185);
+	var _config = __webpack_require__(184);
 	
 	var _config2 = _interopRequireDefault(_config);
 	
-	var _Game = __webpack_require__(186);
+	var _Game = __webpack_require__(185);
 	
 	var _Game2 = _interopRequireDefault(_Game);
 	
-	var _ScreenManager = __webpack_require__(187);
+	var _ScreenManager = __webpack_require__(186);
 	
 	var _ScreenManager2 = _interopRequireDefault(_ScreenManager);
 	
-	var _InitScreen = __webpack_require__(188);
+	var _InitScreen = __webpack_require__(187);
 	
 	var _InitScreen2 = _interopRequireDefault(_InitScreen);
 	
-	var _LoadScreen = __webpack_require__(194);
+	var _LoadScreen = __webpack_require__(193);
 	
 	var _LoadScreen2 = _interopRequireDefault(_LoadScreen);
 	
@@ -37779,8 +37779,7 @@
 	                      */
 
 /***/ },
-/* 184 */,
-/* 185 */
+/* 184 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -37813,7 +37812,7 @@
 	};
 
 /***/ },
-/* 186 */
+/* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -37897,7 +37896,7 @@
 	exports.default = Game;
 
 /***/ },
-/* 187 */
+/* 186 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -37989,7 +37988,7 @@
 	exports.default = ScreenManager;
 
 /***/ },
-/* 188 */
+/* 187 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -38006,25 +38005,33 @@
 	
 	var PIXI = _interopRequireWildcard(_pixi);
 	
-	var _gsap = __webpack_require__(189);
+	var _gsap = __webpack_require__(188);
 	
 	var _gsap2 = _interopRequireDefault(_gsap);
 	
-	var _config = __webpack_require__(185);
+	var _config = __webpack_require__(184);
 	
 	var _config2 = _interopRequireDefault(_config);
 	
-	var _utils = __webpack_require__(191);
+	var _utils = __webpack_require__(190);
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	var _Screen2 = __webpack_require__(192);
+	var _Screen2 = __webpack_require__(191);
 	
 	var _Screen3 = _interopRequireDefault(_Screen2);
 	
-	var _AnimationManager = __webpack_require__(193);
+	var _Ball = __webpack_require__(194);
+	
+	var _Ball2 = _interopRequireDefault(_Ball);
+	
+	var _AnimationManager = __webpack_require__(192);
 	
 	var _AnimationManager2 = _interopRequireDefault(_AnimationManager);
+	
+	var _Trail = __webpack_require__(195);
+	
+	var _Trail2 = _interopRequireDefault(_Trail);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -38059,7 +38066,7 @@
 				this.backgroundContaier.addChild(this.background);
 	
 				this.animationContainer = new PIXI.Container();
-				this.addChild(this.animationContainer);
+				// this.addChild(this.animationContainer)
 	
 				this.animationModel = [];
 				this.animationModel.push({
@@ -38080,13 +38087,124 @@
 				this.animationManager.stopAll();
 				this.animationManager.changeState('idle');
 	
-				this.animationContainer.x = 200;
-				this.animationContainer.y = 200;
+				this.ball = new _Ball2.default();
+	
+				this.addChild(this.ball);
+	
+				this.ball.x = _config2.default.width / 2;
+				this.ball.y = _config2.default.height;
+	
+				// this.ball.velocity.y = -this.ball.speed.y;
+				// this.ball.virtualVelocity.x = 0;
+				// this.ball.virtualVelocity.y = 0;
+	
+				this.ball2 = new _Ball2.default();
+	
+				this.addChild(this.ball2);
+	
+				this.ball2.x = 200;
+				this.ball2.y = 400;
+	
+				this.ball3 = new _Ball2.default();
+	
+				this.addChild(this.ball3);
+	
+				this.ball3.x = 400;
+				this.ball3.y = 600;
+	
+				this.ingameUIContainer = new PIXI.Container();
+				this.addChild(this.ingameUIContainer);
+	
+				this.backgroundIngameUI = new PIXI.Graphics().beginFill(0x023548).drawRect(0, 0, _config2.default.width, _config2.default.height);
+				this.backgroundIngameUI.alpha = 0;
+				this.ingameUIContainer.addChild(this.backgroundIngameUI);
+	
+				this.addEvents();
+	
+				this.mouseTrail = new _Trail2.default(this.ingameUIContainer, 20, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
+			}
+		}, {
+			key: 'collideBounds',
+			value: function collideBounds(delta, entity) {
+	
+				if (entity.velocity.x > 0) {
+					if (entity.x > _config2.default.width) {
+						entity.velocity.x *= -1;
+						entity.x += entity.velocity.x * delta;
+					}
+				} else if (entity.velocity.x < 0) {
+					if (entity.x < 0) {
+						entity.velocity.x *= -1;
+						entity.x += entity.velocity.x * delta;
+					}
+				}
+	
+				if (entity.velocity.y > 0) {
+					if (entity.y > _config2.default.height) {
+						entity.velocity.y *= -1;
+						entity.y += entity.velocity.y * delta;
+					}
+				} else if (entity.velocity.y < 0) {
+					if (entity.y < 0) {
+						entity.velocity.y *= -1;
+						entity.y += entity.velocity.y * delta;
+					}
+				}
+			}
+		}, {
+			key: 'collide',
+			value: function collide(delta, entity, toCollide) {
+				if (_utils2.default.distance(toCollide.x, toCollide.y, entity.x, entity.y) < toCollide.getRadius() + entity.getRadius()) {
+					var angle = -Math.atan2(toCollide.y - entity.y, toCollide.x - entity.x);
+					angle += 90 / 180 * 3.14;
+					var percent = (Math.abs(entity.velocity.x) + Math.abs(entity.velocity.y)) / (Math.abs(entity.speed.x) + Math.abs(entity.speed.y));
+					entity.velocity.x = Math.sin(angle) * -Math.abs(entity.speed.x * percent);
+					entity.velocity.y = Math.cos(angle) * -Math.abs(entity.speed.y * percent);
+				}
 			}
 		}, {
 			key: 'update',
 			value: function update(delta) {
 				_get(InitScreen.prototype.__proto__ || Object.getPrototypeOf(InitScreen.prototype), 'update', this).call(this, delta);
+	
+				this.mousePosition = renderer.plugins.interaction.mouse.global;
+				this.mouseTrail.update(delta, this.mousePosition);
+	
+				this.collide(delta, this.ball, this.ball2);
+				this.collide(delta, this.ball, this.ball3);
+				this.collideBounds(delta, this.ball);
+			}
+		}, {
+			key: 'onTapDown',
+			value: function onTapDown() {
+	
+				var angle = -Math.atan2(this.ball.y - this.mousePosition.y, this.ball.x - this.mousePosition.x);
+				angle += 90 / 180 * 3.14;
+				//this.ball.x = config.width / 2;
+				//this.ball.y = config.height;
+	
+				this.ball.velocity.x = 0;
+				this.ball.velocity.y = 0;
+				this.ball.velocity.x = -this.ball.speed.x * Math.sin(angle);
+				this.ball.velocity.y = -this.ball.speed.y * Math.cos(angle);
+	
+				this.ball.virtualVelocity.x = 0;
+				this.ball.virtualVelocity.y = 0;
+			}
+		}, {
+			key: 'removeEvents',
+			value: function removeEvents() {
+				this.ingameUIContainer.interactive = false;
+				this.ingameUIContainer.off('touchstart').off('mousedown');
+				// this.ingameUIContainer.off('touchend').off('mouseup');
+			}
+		}, {
+			key: 'addEvents',
+			value: function addEvents() {
+				this.removeEvents();
+				this.ingameUIContainer.interactive = true;
+				this.ingameUIContainer.on('mousedown', this.onTapDown.bind(this)).on('touchstart', this.onTapDown.bind(this));
+				// this.ingameUIContainer.on('mouseup', this.onTapUp.bind(this)).on('touchend', this.onTapUp.bind(this));
 			}
 		}]);
 	
@@ -38096,7 +38214,7 @@
 	exports.default = InitScreen;
 
 /***/ },
-/* 189 */
+/* 188 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(global) {/*!
@@ -44142,7 +44260,7 @@
 							if (global) {
 								_globals[n] = _exports[n] = cl; //provides a way to avoid global namespace pollution. By default, the main classes like TweenLite, Power1, Strong, etc. are added to window unless a GreenSockGlobals is defined. So if you want to have things added to a custom object instead, just do something like window.GreenSockGlobals = {} before loading any GreenSock files. You can even set up an alias like window.GreenSockGlobals = windows.gs = {} so that you can access everything like gs.TweenLite. Also remember that ALL classes are added to the window.com.greensock object (in their respective packages, like com.greensock.easing.Power1, com.greensock.TweenLite, etc.)
 								hasModule = (typeof(module) !== "undefined" && module.exports);
-								if (!hasModule && "function" === "function" && __webpack_require__(190)){ //AMD
+								if (!hasModule && "function" === "function" && __webpack_require__(189)){ //AMD
 									!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() { return cl; }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 								} else if (hasModule){ //node
 									if (ns === moduleName) {
@@ -45959,7 +46077,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 190 */
+/* 189 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
@@ -45967,7 +46085,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ },
-/* 191 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -45976,7 +46094,7 @@
 	    value: true
 	});
 	
-	var _config = __webpack_require__(185);
+	var _config = __webpack_require__(184);
 	
 	var _config2 = _interopRequireDefault(_config);
 	
@@ -46245,7 +46363,7 @@
 	};
 
 /***/ },
-/* 192 */
+/* 191 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -46377,7 +46495,7 @@
 	exports.default = Screen;
 
 /***/ },
-/* 193 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -46564,7 +46682,7 @@
 	exports.default = AnimationManager;
 
 /***/ },
-/* 194 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -46581,19 +46699,19 @@
 	
 	var PIXI = _interopRequireWildcard(_pixi);
 	
-	var _gsap = __webpack_require__(189);
+	var _gsap = __webpack_require__(188);
 	
 	var _gsap2 = _interopRequireDefault(_gsap);
 	
-	var _config = __webpack_require__(185);
+	var _config = __webpack_require__(184);
 	
 	var _config2 = _interopRequireDefault(_config);
 	
-	var _utils = __webpack_require__(191);
+	var _utils = __webpack_require__(190);
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	var _Screen2 = __webpack_require__(192);
+	var _Screen2 = __webpack_require__(191);
 	
 	var _Screen3 = _interopRequireDefault(_Screen2);
 	
@@ -46799,6 +46917,408 @@
 	}(_Screen3.default);
 	
 	exports.default = LoadScreen;
+
+/***/ },
+/* 194 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _pixi = __webpack_require__(1);
+	
+	var PIXI = _interopRequireWildcard(_pixi);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Ball = function (_PIXI$Container) {
+	    _inherits(Ball, _PIXI$Container);
+	
+	    function Ball(debug) {
+	        _classCallCheck(this, Ball);
+	
+	        var _this = _possibleConstructorReturn(this, (Ball.__proto__ || Object.getPrototypeOf(Ball)).call(this));
+	
+	        _this.virtualVelocity = { x: 0, y: 0 };
+	        _this.velocity = { x: 0, y: 0 };
+	        _this.speed = { x: 600, y: 600 };
+	        _this.friction = { x: 100, y: 100 };
+	        _this.scaleFator = 1;
+	        _this.standardScale = 1;
+	        _this.speedScale = 1;
+	        _this.starterScale = 0.5;
+	        _this.radius = 20;
+	        _this.externalRadius = 100;
+	        _this.static = false;
+	        _this.side = 1;
+	        _this.maxLife = 5;
+	        _this.life = 5;
+	        _this.collidable = true;
+	
+	        _this.container = new PIXI.Container();
+	
+	        _this.addChild(_this.container);
+	
+	        _this.externalColisionCircle = new PIXI.Graphics();
+	        _this.externalColisionCircle.lineStyle(1, 0xFFFF00);
+	        _this.externalColisionCircle.drawCircle(0, 0, _this.radius);
+	        _this.externalColisionCircle.alpha = 0.8;
+	        _this.container.addChild(_this.externalColisionCircle);
+	
+	        return _this;
+	    }
+	
+	    _createClass(Ball, [{
+	        key: 'getRadius',
+	        value: function getRadius() {
+	            return this.standardScale * this.radius;
+	        }
+	    }, {
+	        key: 'getExternalRadius',
+	        value: function getExternalRadius() {
+	            return this.standardScale * this.externalRadius;
+	        }
+	    }, {
+	        key: 'update',
+	        value: function update(delta) {
+	            this.x += this.velocity.x * delta;
+	            this.y += this.velocity.y * delta;
+	
+	            if (this.velocity.x < this.virtualVelocity.x) {
+	                this.velocity.x += this.friction.x * delta;
+	                if (this.velocity.x > this.virtualVelocity.x) {
+	                    this.velocity.x = this.virtualVelocity.x;
+	                }
+	            } else if (this.velocity.x > this.virtualVelocity.x) {
+	                this.velocity.x -= this.friction.x * delta;
+	                if (this.velocity.x < this.virtualVelocity.x) {
+	                    this.velocity.x = this.virtualVelocity.x;
+	                }
+	            }
+	
+	            if (this.velocity.y < this.virtualVelocity.y) {
+	                this.velocity.y += this.friction.y * delta;
+	                if (this.velocity.y > this.virtualVelocity.y) {
+	                    this.velocity.y = this.virtualVelocity.y;
+	                }
+	            } else if (this.velocity.y > this.virtualVelocity.y) {
+	                this.velocity.y -= this.friction.y * delta;
+	                if (this.velocity.y < this.virtualVelocity.y) {
+	                    this.velocity.y = this.virtualVelocity.y;
+	                }
+	            }
+	        }
+	    }]);
+	
+	    return Ball;
+	}(PIXI.Container);
+	
+	exports.default = Ball;
+
+/***/ },
+/* 195 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _pixi = __webpack_require__(1);
+	
+	var PIXI = _interopRequireWildcard(_pixi);
+	
+	var _config = __webpack_require__(184);
+	
+	var _config2 = _interopRequireDefault(_config);
+	
+	var _gsap = __webpack_require__(188);
+	
+	var _gsap2 = _interopRequireDefault(_gsap);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Trail = function (_PIXI$Container) {
+		_inherits(Trail, _PIXI$Container);
+	
+		function Trail(trailContainer) {
+			var points = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 30;
+			var texture = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'assets/images/rainbow-flag.jpg';
+	
+			_classCallCheck(this, Trail);
+	
+			var _this = _possibleConstructorReturn(this, (Trail.__proto__ || Object.getPrototypeOf(Trail)).call(this));
+	
+			_this.container = new PIXI.Container();
+			_this.addChild(_this.container);
+			_this.trailPoints = [];
+			_this.nextPointTimer = 0.1;
+	
+			_this.trailContainer = trailContainer;
+			_this.polygon = new PIXI.Graphics();
+			_this.trailContainer.addChild(_this.polygon);
+			_this.polyMesh = [];
+	
+			_this.totalPoints = points;
+	
+			_this.polyVerts = new Float32Array(_this.totalPoints * 2);
+			_this.polyUvs = new Float32Array(_this.totalPoints * 2);
+			_this.polyIndicies = new Uint16Array(_this.totalPoints);
+	
+			for (var i = 0; i < _this.totalPoints; i++) {
+				_this.polyUvs[i * 2] = 0.5;
+				_this.polyUvs[i * 2 + 1] = 1 * (1 - i % 2);
+			}
+	
+			for (var i = 0; i < _this.polyIndicies.length; i++) {
+				_this.polyIndicies[i] = i;
+			}
+	
+			_this.mesh = new PIXI.mesh.Mesh(PIXI.Texture.from(texture), _this.polyVerts, _this.polyUvs, _this.polyIndicies, PIXI.mesh.Mesh.DRAW_MODES.TRIANGLE_STRIP);
+			_this.trailContainer.addChild(_this.mesh);
+	
+			_this.trailTick = 15;
+			_this.speed = 0.08;
+			_this.frequency = 0.01;
+	
+			_this.firstIteraction = true;
+	
+			_this.trailDots = [];
+	
+			for (var i = 0; i < _this.totalPoints; i++) {
+				var tPoint = new PIXI.Container();
+				var gr = new PIXI.Graphics().beginFill(0xFFFFFF).drawCircle(0, 0, _this.trailTick / 2);
+				var gr2 = new PIXI.Graphics().beginFill(0x000000).drawCircle(0, -_this.trailTick / 2, 2);
+				tPoint.addChild(gr);
+				tPoint.addChild(gr2);
+				tPoint.alpha = 0.2;
+				tPoint.scale.set(0);
+				_this.trailDots.push(tPoint);
+			}
+	
+			return _this;
+		}
+	
+		_createClass(Trail, [{
+			key: 'changeTexture',
+			value: function changeTexture(texture) {
+				this.mesh.texture = texture;
+			}
+		}, {
+			key: 'scaleSort',
+			value: function scaleSort(a, b) {
+				var yA = a.scale.x;
+				var yB = b.scale.x;
+				if (yA < yB) {
+					return -1;
+				}
+				if (yA > yB) {
+					return 1;
+				}
+				return 0;
+			}
+		}, {
+			key: 'drawPointsTexture',
+			value: function drawPointsTexture() {
+				this.trailMesh = [];
+				this.polyMesh = [];
+	
+				var sin = 0;
+				var cos = 0;
+				var rod = 0;
+	
+				for (var i = this.trailDots.length - 2; i >= 0; i--) {
+					var point = this.trailDots[i];
+					var nextPoint = this.trailDots[i + 1];
+	
+					rod = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x);
+					sin = Math.sin(rod);
+					cos = Math.cos(rod);
+					var meshPoint = { x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos };
+					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos });
+					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * -sin, y: point.y + point.scale.x * this.trailTick * -cos });
+				}
+	
+				for (var i = 0; i < this.trailMesh.length; i++) {
+					this.polyMesh.push(this.trailMesh[i].x);
+					this.polyMesh.push(this.trailMesh[i].y);
+					this.polyVerts[i * 2] = this.trailMesh[i].x;
+					this.polyVerts[i * 2 + 1] = this.trailMesh[i].y;
+				}
+	
+				// this.polygon.clear();
+				// this.polygon.lineStyle(1,0);
+				// this.polygon.drawPolygon(this.polyMesh);
+				// this.polygon.endFill();
+				// this.trailContainer.addChild(this.polygon);
+			}
+		}, {
+			key: 'drawPoints',
+			value: function drawPoints() {
+				this.trailGraphic.clear();
+				if (this.trailPoints.length < 5) {
+					return;
+				}
+	
+				this.trailMesh = [];
+				this.trailGraphic.beginFill(0xffffff);
+				this.trailGraphic.alpha = 0.2;
+				this.trailGraphic.lineStyle(1, 0);
+				this.trailGraphic.blendMode = PIXI.BLEND_MODES.ADD;
+				var lastPoint = this.trailPoints[this.trailPoints.length - 1];
+				// let firstPoint = this.trailPoints[0];
+				var sin = 0;
+				var cos = 0;
+	
+				var rod = 0;
+	
+				var extraAngle = -3.14 / 4;
+				for (var i = 0; i < this.trailPoints.length - 1; i++) {
+					// rod = point.rotatio
+	
+					var point = this.trailPoints[i];
+					// if(point.scale.x > 0){
+					var nextPoint = this.trailPoints[i + 1];
+					rod = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) + extraAngle; //  * 180 / 3.14;
+					sin = Math.sin(rod);
+					cos = Math.cos(rod);
+					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos });
+					// }
+				}
+	
+				var flag1 = true;
+				for (var i = this.trailPoints.length - 1; i >= 1; i--) {
+					// rod = point.rotatio
+					var _point = this.trailPoints[i];
+					// if(point.scale.x > 0){
+					var _nextPoint = this.trailPoints[i - 1];
+					rod = Math.atan2(_nextPoint.y - _point.y, _nextPoint.x - _point.x) + extraAngle - 3.14; // * 180 / 3.14;
+					sin = Math.sin(rod);
+					cos = Math.cos(rod);
+	
+					var meshPoint = { x: _point.x + _point.scale.x * this.trailTick * sin, y: _point.y - _point.scale.x * this.trailTick * cos };
+					if (flag1) {
+						var last = this.trailMesh[this.trailMesh.length - 1];
+						var next = meshPoint;
+						var midleAngle = -Math.atan2(next.y - last.y, next.x - last.x);
+						var dist = this.distance(next.x, next.y, last.x, last.y) / 2;
+						var middleMeshPoint = {
+							x: _point.x + Math.sin(midleAngle) * dist,
+							y: _point.y + Math.cos(midleAngle) * dist
+						};
+						this.trailMesh.push(middleMeshPoint);
+						flag1 = false;
+					}
+					this.trailMesh.push(meshPoint);
+					// }
+				}
+	
+				this.trailGraphic.moveTo(this.trailMesh[i].x, this.trailMesh[i].y);
+				for (var i = 0; i < this.trailMesh.length; i++) {
+					this.trailGraphic.lineTo(this.trailMesh[i].x, this.trailMesh[i].y);
+				}
+				// this.trailGraphic.lineTo(this.trailMesh[this.trailMesh.length-1].x + (this.trailMesh[this.trailMesh.length-1].x - lastPoint.x) / 2,
+				// 	this.trailMesh[this.trailMesh.length-1].y - lastPoint.y + (this.trailMesh[this.trailMesh.length-1].y - lastPoint.y) / 2);
+			}
+		}, {
+			key: 'updatePoint',
+			value: function updatePoint(pos) {
+	
+				if (this.firstIteraction) {
+					for (var i = 0; i < this.trailDots.length; i++) {
+						this.trailDots[i].x = pos.x;
+						this.trailDots[i].y = pos.y;
+					}
+					this.firstIteraction = false;
+				}
+	
+				if (this.trailDots.length) {
+					var firstPoint = this.trailDots[0];
+	
+					if (this.distance(firstPoint.x, firstPoint.y, pos.x, pos.y) < this.trailTick) {
+						this.nextPointTimer = this.frequency;
+						return;
+					}
+				}
+	
+				var dot = this.trailDots[0];
+				this.trailDots.splice(0, 1);
+				dot.x = pos.x;
+				dot.y = pos.y;
+				this.trailDots.push(dot);
+	
+				// dot.scale.set(1);
+				_gsap2.default.to(dot.scale, 0.1, { x: 1, y: 1 });
+				this.nextPointTimer = this.frequency;
+			}
+		}, {
+			key: 'distance',
+			value: function distance(x1, y1, x2, y2) {
+				return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+			}
+		}, {
+			key: 'build',
+			value: function build() {}
+		}, {
+			key: 'reset',
+			value: function reset() {
+				for (var i = this.trailDots.length - 1; i >= 0; i--) {
+					this.trailDots[i].scale.set(0);
+	
+					this.trailDots[i].x = this.trailDots[0].x;
+					this.trailDots[i].y = this.trailDots[0].y;
+				}
+				this.nextPointTimer = 0.2;
+				this.drawPointsTexture();
+			}
+		}, {
+			key: 'update',
+			value: function update(delta, pos) {
+	
+				this.nextPointTimer -= delta;
+	
+				for (var i = this.trailDots.length - 1; i >= 0; i--) {
+					this.trailDots[i].scale.x -= this.speed; //delta * this.speed;
+					this.trailDots[i].scale.y -= this.speed; //delta * this.speed;
+	
+					if (this.trailDots[i].scale.x <= 0) {
+						this.trailDots[i].scale.set(0);
+					}
+				}
+	
+				if (this.nextPointTimer <= 0) {
+					this.updatePoint(pos);
+				}
+				this.drawPointsTexture();
+			}
+		}]);
+	
+		return Trail;
+	}(PIXI.Container);
+	
+	exports.default = Trail;
 
 /***/ }
 /******/ ]);

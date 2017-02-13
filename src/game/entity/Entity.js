@@ -79,7 +79,7 @@ export default class Entity extends PIXI.Container {
             return;
         }
         this.externalColisionCircle = new PIXI.Graphics();
-        this.externalColisionCircle.lineStyle(1,0x00FF00);
+        this.externalColisionCircle.lineStyle(1,0xFFFF00);
         this.externalColisionCircle.drawCircle(0,0,this.externalRadius);
         this.externalColisionCircle.alpha = 0.8;
         this.addChild(this.externalColisionCircle);
