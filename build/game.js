@@ -37788,8 +37788,10 @@
 		value: true
 	});
 	exports.default = {
-		width: window.innerWidth / 2,
-		height: window.innerHeight / 2,
+		// width: window.innerWidth/2,
+		width: 414,
+		height: 736,
+		// height: window.innerHeight/2,
 		webgl: true,
 		tileWidth: true,
 		effectsLayer: null,
@@ -37837,6 +37839,9 @@
 	
 			var Renderer = config.webgl ? PIXI.autoDetectRenderer : PIXI.CanvasRenderer;
 			//config.width = window.screen.width;
+	
+			// 	width: 414,
+			// height: 736,
 	
 			//config.height = window.screen.height;
 			this.ratio = config.width / config.height;

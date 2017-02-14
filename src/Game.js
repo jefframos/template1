@@ -5,6 +5,9 @@ export default class Game {
 		const Renderer = (config.webgl) ? PIXI.autoDetectRenderer : PIXI.CanvasRenderer;
 		//config.width = window.screen.width;
 
+	// 	width: 414,
+	// height: 736,
+
 		//config.height = window.screen.height;
 		this.ratio = config.width / config.height;
 		window.renderer = new Renderer(config.width || 800, config.height || 600, config.rendererOptions);
