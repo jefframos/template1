@@ -49,7 +49,7 @@ export default class InitScreen extends Screen{
         this.addChild(this.ball)
 
         this.ball.x = config.width / 2;
-        this.ball.y = config.height - 100;
+        this.ball.y = config.height - 200;
 
         // this.ball.velocity.y = -this.ball.speed.y;
         // this.ball.virtualVelocity.x = 0;
@@ -100,24 +100,24 @@ export default class InitScreen extends Screen{
 	collideBounds(delta, entity){
 
 		if(entity.velocity.x > 0){
-			if(entity.x > config.width){
+			if(entity.x > config.width *0.85){
 				entity.velocity.x *= -0.5;
 				entity.x += entity.velocity.x * delta;
 			}
 		}else if(entity.velocity.x < 0){
-			if(entity.x < 0){
+			if(entity.x < config.width *0.15){
 				entity.velocity.x *= -0.5;
 				entity.x += entity.velocity.x * delta
 			}
 		}
 
 		if(entity.velocity.y > 0){
-			if(entity.y > config.height){
+			if(entity.y > config.height * 0.8){
 				entity.velocity.y *= -0.5;
 				entity.y += entity.velocity.y * delta;
 			}
 		}else if(entity.velocity.y < 0){
-			if(entity.y < 0){
+			if(entity.y < config.height * 0.2){
 				entity.velocity.y *= -0.5;
 				entity.y += entity.velocity.y * delta;
 			}

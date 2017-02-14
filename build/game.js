@@ -38092,7 +38092,7 @@
 				this.addChild(this.ball);
 	
 				this.ball.x = _config2.default.width / 2;
-				this.ball.y = _config2.default.height - 100;
+				this.ball.y = _config2.default.height - 200;
 	
 				// this.ball.velocity.y = -this.ball.speed.y;
 				// this.ball.virtualVelocity.x = 0;
@@ -38145,24 +38145,24 @@
 			value: function collideBounds(delta, entity) {
 	
 				if (entity.velocity.x > 0) {
-					if (entity.x > _config2.default.width) {
+					if (entity.x > _config2.default.width * 0.85) {
 						entity.velocity.x *= -0.5;
 						entity.x += entity.velocity.x * delta;
 					}
 				} else if (entity.velocity.x < 0) {
-					if (entity.x < 0) {
+					if (entity.x < _config2.default.width * 0.15) {
 						entity.velocity.x *= -0.5;
 						entity.x += entity.velocity.x * delta;
 					}
 				}
 	
 				if (entity.velocity.y > 0) {
-					if (entity.y > _config2.default.height) {
+					if (entity.y > _config2.default.height * 0.8) {
 						entity.velocity.y *= -0.5;
 						entity.y += entity.velocity.y * delta;
 					}
 				} else if (entity.velocity.y < 0) {
-					if (entity.y < 0) {
+					if (entity.y < _config2.default.height * 0.2) {
 						entity.velocity.y *= -0.5;
 						entity.y += entity.velocity.y * delta;
 					}
