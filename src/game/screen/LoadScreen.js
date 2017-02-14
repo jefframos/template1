@@ -19,7 +19,7 @@ export default class LoadScreen extends Screen{
 	}
 
 	toGame(){
-		this.screenManager.change('GameScreen')
+		this.screenManager.change('InitScreen')
 	}
 	startLoad(){
 		let loader = new PIXI.loaders.Loader(); // you can also create your own if you want
@@ -32,6 +32,8 @@ export default class LoadScreen extends Screen{
 	}
 	onAssetsLoaded(evt){
 
+		this.toGame();
+		return;
 		let map = evt.resources[this.mapSrc].data;
 		let mapLayers = map.layers;
 

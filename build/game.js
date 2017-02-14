@@ -37724,7 +37724,7 @@
 	
 	var _InitScreen2 = _interopRequireDefault(_InitScreen);
 	
-	var _LoadScreen = __webpack_require__(193);
+	var _LoadScreen = __webpack_require__(195);
 	
 	var _LoadScreen2 = _interopRequireDefault(_LoadScreen);
 	
@@ -37751,7 +37751,7 @@
 		screenManager.addScreen(initScreen);
 		screenManager.addScreen(loadScreen);
 		//change to init screen
-		screenManager.forceChange('InitScreen');
+		screenManager.forceChange('LoadScreen');
 	
 		// screenManager.filters = [this.pixelate]
 	
@@ -38021,15 +38021,15 @@
 	
 	var _Screen3 = _interopRequireDefault(_Screen2);
 	
-	var _Ball = __webpack_require__(194);
+	var _Ball = __webpack_require__(192);
 	
 	var _Ball2 = _interopRequireDefault(_Ball);
 	
-	var _AnimationManager = __webpack_require__(192);
+	var _AnimationManager = __webpack_require__(193);
 	
 	var _AnimationManager2 = _interopRequireDefault(_AnimationManager);
 	
-	var _Trail = __webpack_require__(195);
+	var _Trail = __webpack_require__(194);
 	
 	var _Trail2 = _interopRequireDefault(_Trail);
 	
@@ -38087,12 +38087,12 @@
 				this.animationManager.stopAll();
 				this.animationManager.changeState('idle');
 	
-				this.ball = new _Ball2.default();
+				this.ball = new _Ball2.default(50);
 	
 				this.addChild(this.ball);
 	
 				this.ball.x = _config2.default.width / 2;
-				this.ball.y = _config2.default.height;
+				this.ball.y = _config2.default.height - 100;
 	
 				// this.ball.velocity.y = -this.ball.speed.y;
 				// this.ball.virtualVelocity.x = 0;
@@ -38121,7 +38121,24 @@
 	
 				this.addEvents();
 	
-				this.mouseTrail = new _Trail2.default(this.ingameUIContainer, 20, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
+				this.currentTrail = false;
+	
+				this.trailPool = [];
+			}
+		}, {
+			key: 'getTrail',
+			value: function getTrail() {
+				for (var i = this.trailPool.length - 1; i >= 0; i--) {
+					if (this.trailPool[i].killed) {
+						return this.trailPool[i];
+					}
+				}
+				var trail = new _Trail2.default(this.ingameUIContainer, 200, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
+				trail.trailTick = 15;
+				trail.speed = 0.01;
+				trail.frequency = 0.0001;
+				this.trailPool.push(trail);
+				return trail;
 			}
 		}, {
 			key: 'collideBounds',
@@ -38168,35 +38185,131 @@
 				_get(InitScreen.prototype.__proto__ || Object.getPrototypeOf(InitScreen.prototype), 'update', this).call(this, delta);
 	
 				this.mousePosition = renderer.plugins.interaction.mouse.global;
-				this.mouseTrail.update(delta, this.mousePosition);
+				// if(this.currentTrail)
+				this.verifyInterception();
+				for (var i = this.trailPool.length - 1; i >= 0; i--) {
+					if (!this.trailPool[i].killed && this.trailPool[i] != this.currentTrail) {
+						this.trailPool[i].update(delta, null);
+					}
+				}
+				if (this.currentTrail) {
+					this.currentTrail.update(delta, this.mousePosition);
+				}
 	
 				this.collide(delta, this.ball, this.ball2);
 				this.collide(delta, this.ball, this.ball3);
 				this.collideBounds(delta, this.ball);
 			}
-		}, {
-			key: 'onTapDown',
-			value: function onTapDown() {
+			// bkp(){
+			// 	let angle = -Math.atan2(this.ball.y - this.mousePosition.y, this.ball.x - this.mousePosition.x);
+			// 	angle += 90 / 180 * 3.14;
+			// 	//this.ball.x = config.width / 2;
+			//        //this.ball.y = config.height;
 	
-				var angle = -Math.atan2(this.ball.y - this.mousePosition.y, this.ball.x - this.mousePosition.x);
+			//        this.ball.velocity.x = 0;
+			//        this.ball.velocity.y = 0;
+			//        this.ball.velocity.x = -this.ball.speed.x * Math.sin(angle);
+			//        this.ball.velocity.y = -this.ball.speed.y * Math.cos(angle);
+	
+			//        this.ball.virtualVelocity.x = 0;
+			//        this.ball.virtualVelocity.y = 0;
+			// }
+	
+		}, {
+			key: 'inteceptCircleLineSeg',
+			value: function inteceptCircleLineSeg(circle, line) {
+				var a, b, c, d, u1, u2, ret, retP1, retP2, v1, v2;
+				v1 = {};
+				v2 = {};
+				v1.x = line.p2.x - line.p1.x;
+				v1.y = line.p2.y - line.p1.y;
+				v2.x = line.p1.x - circle.x;
+				v2.y = line.p1.y - circle.y;
+				b = v1.x * v2.x + v1.y * v2.y;
+				c = 2 * (v1.x * v1.x + v1.y * v1.y);
+				b *= -2;
+				d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.radius * circle.radius));
+				if (isNaN(d)) {
+					// no intercept
+					return [];
+				}
+				u1 = (b - d) / c; // these represent the unit distance of point one and two on the line
+				u2 = (b + d) / c;
+				retP1 = {}; // return points
+				retP2 = {};
+				ret = []; // return array
+				if (u1 <= 1 && u1 >= 0) {
+					// add point if on the line segment
+					retP1.x = line.p1.x + v1.x * u1;
+					retP1.y = line.p1.y + v1.y * u1;
+					ret[0] = retP1;
+				}
+				if (u2 <= 1 && u2 >= 0) {
+					// second add point if on the line segment
+					retP2.x = line.p1.x + v1.x * u2;
+					retP2.y = line.p1.y + v1.y * u2;
+					ret[ret.length] = retP2;
+				}
+				return ret;
+			}
+		}, {
+			key: 'verifyInterception',
+			value: function verifyInterception() {
+				if (!this.tapping) {
+					return;
+				}
+	
+				this.secPoint = { x: this.mousePosition.x, y: this.mousePosition.y };
+				// console.log(this.firstPoint);
+				// console.log(this.secPoint);
+	
+				var interception = this.inteceptCircleLineSeg(this.ball, { p1: this.firstPoint, p2: this.secPoint });
+				// console.log(interception);
+				if (interception.length < 2) {
+					return;
+				}
+				this.tapping = false;
+				var angleColision = -Math.atan2(interception[0].y - interception[1].y, interception[0].x - interception[1].x);
+				angleColision += 90 / 180 * 3.14;
+				// console.log(interception, angleColision * 180 / 3.14);
+				var angle = -Math.atan2(this.firstPoint.y - this.secPoint.y, this.firstPoint.x - this.secPoint.x);
 				angle += 90 / 180 * 3.14;
 				//this.ball.x = config.width / 2;
 				//this.ball.y = config.height;
-	
+				var angSpeed = angleColision;
+				// let angSpeed = this.ball.rotation - angleColision;
+				// this.ball.rotation += angleColision// * 0.5;
+				var force = _utils2.default.distance(this.firstPoint.x, this.firstPoint.y, this.secPoint.x, this.secPoint.y) * 0.01;
+				console.log(force);
+				this.ball.rotationSpeed = angSpeed * 1; // * 0.5;
 				this.ball.velocity.x = 0;
 				this.ball.velocity.y = 0;
-				this.ball.velocity.x = -this.ball.speed.x * Math.sin(angle);
-				this.ball.velocity.y = -this.ball.speed.y * Math.cos(angle);
+				this.ball.velocity.x = -this.ball.speed.x * Math.sin(angle) * force;
+				this.ball.velocity.y = -this.ball.speed.y * Math.cos(angle) * force;
 	
 				this.ball.virtualVelocity.x = 0;
 				this.ball.virtualVelocity.y = 0;
+			}
+		}, {
+			key: 'onTapUp',
+			value: function onTapUp() {
+				this.currentTrail = null;
+				this.tapping = false;
+			}
+		}, {
+			key: 'onTapDown',
+			value: function onTapDown() {
+				// this.currentTrail = this.getTrail();
+				// this.currentTrail.update(0, this.mousePosition)
+				this.tapping = true;
+				this.firstPoint = { x: this.mousePosition.x, y: this.mousePosition.y };
 			}
 		}, {
 			key: 'removeEvents',
 			value: function removeEvents() {
 				this.ingameUIContainer.interactive = false;
 				this.ingameUIContainer.off('touchstart').off('mousedown');
-				// this.ingameUIContainer.off('touchend').off('mouseup');
+				this.ingameUIContainer.off('touchend').off('mouseup');
 			}
 		}, {
 			key: 'addEvents',
@@ -38204,7 +38317,7 @@
 				this.removeEvents();
 				this.ingameUIContainer.interactive = true;
 				this.ingameUIContainer.on('mousedown', this.onTapDown.bind(this)).on('touchstart', this.onTapDown.bind(this));
-				// this.ingameUIContainer.on('mouseup', this.onTapUp.bind(this)).on('touchend', this.onTapUp.bind(this));
+				this.ingameUIContainer.on('mouseup', this.onTapUp.bind(this)).on('touchend', this.onTapUp.bind(this));
 			}
 		}]);
 	
@@ -46514,6 +46627,134 @@
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Ball = function (_PIXI$Container) {
+	    _inherits(Ball, _PIXI$Container);
+	
+	    function Ball() {
+	        var radius = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 20;
+	
+	        _classCallCheck(this, Ball);
+	
+	        var _this = _possibleConstructorReturn(this, (Ball.__proto__ || Object.getPrototypeOf(Ball)).call(this));
+	
+	        _this.virtualVelocity = { x: 0, y: 0 };
+	        _this.velocity = { x: 0, y: 0 };
+	        _this.speed = { x: 600, y: 600 };
+	        _this.friction = { x: 100, y: 100 };
+	        _this.rotationSpeed = 0;
+	        _this.scaleFator = 1;
+	        _this.standardScale = 1;
+	        _this.speedScale = 1;
+	        _this.starterScale = 0.5;
+	        _this.radius = radius;
+	        _this.externalRadius = 100;
+	        _this.static = false;
+	        _this.side = 1;
+	        _this.maxLife = 5;
+	        _this.life = 5;
+	        _this.collidable = true;
+	
+	        _this.container = new PIXI.Container();
+	        _this.addChild(_this.container);
+	
+	        // if(this.radius > 20){
+	        _this.sprite = new PIXI.Sprite(PIXI.Texture.from('assets/images/onion.png'));
+	        _this.container.addChild(_this.sprite);
+	        _this.sprite.anchor.set(0.5);
+	        console.log(_this.radius, _this.sprite.width);
+	        _this.sprite.scale.set(_this.radius / 50);
+	        // }
+	
+	        // this.externalColisionCircle = new PIXI.Graphics();
+	        // this.externalColisionCircle.lineStyle(1,0xFFFF00);
+	        // this.externalColisionCircle.drawCircle(0,0,this.radius);
+	        // this.externalColisionCircle.alpha = 0.8;
+	        // this.container.addChild(this.externalColisionCircle);
+	
+	
+	        return _this;
+	    }
+	
+	    _createClass(Ball, [{
+	        key: 'getRadius',
+	        value: function getRadius() {
+	            return this.standardScale * this.radius;
+	        }
+	    }, {
+	        key: 'getExternalRadius',
+	        value: function getExternalRadius() {
+	            return this.standardScale * this.externalRadius;
+	        }
+	    }, {
+	        key: 'update',
+	        value: function update(delta) {
+	            this.x += this.velocity.x * delta;
+	            this.y += this.velocity.y * delta;
+	
+	            var percentage = Math.abs((Math.abs(this.velocity.x) + Math.abs(this.velocity.y)) / (Math.abs(this.speed.x) + Math.abs(this.speed.y)));
+	            // console.log(this.rotationSpeed);
+	            this.rotation += this.rotationSpeed * percentage;
+	
+	            // if(percentage){
+	            //     this.velocity.x += Math.sin(this.rotation);
+	            //     this.velocity.y += Math.cos(this.rotation);
+	            // }
+	
+	            if (this.velocity.x < this.virtualVelocity.x) {
+	                this.velocity.x += this.friction.x * delta;
+	                if (this.velocity.x > this.virtualVelocity.x) {
+	                    this.velocity.x = this.virtualVelocity.x;
+	                }
+	            } else if (this.velocity.x > this.virtualVelocity.x) {
+	                this.velocity.x -= this.friction.x * delta;
+	                if (this.velocity.x < this.virtualVelocity.x) {
+	                    this.velocity.x = this.virtualVelocity.x;
+	                }
+	            }
+	
+	            if (this.velocity.y < this.virtualVelocity.y) {
+	                this.velocity.y += this.friction.y * delta;
+	                if (this.velocity.y > this.virtualVelocity.y) {
+	                    this.velocity.y = this.virtualVelocity.y;
+	                }
+	            } else if (this.velocity.y > this.virtualVelocity.y) {
+	                this.velocity.y -= this.friction.y * delta;
+	                if (this.velocity.y < this.virtualVelocity.y) {
+	                    this.velocity.y = this.virtualVelocity.y;
+	                }
+	            }
+	        }
+	    }]);
+	
+	    return Ball;
+	}(PIXI.Container);
+	
+	exports.default = Ball;
+
+/***/ },
+/* 193 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _pixi = __webpack_require__(1);
+	
+	var PIXI = _interopRequireWildcard(_pixi);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
 	var AnimationManager = function () {
 	    function AnimationManager(animationModel, animationContainer) {
 	        _classCallCheck(this, AnimationManager);
@@ -46682,7 +46923,311 @@
 	exports.default = AnimationManager;
 
 /***/ },
-/* 193 */
+/* 194 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _pixi = __webpack_require__(1);
+	
+	var PIXI = _interopRequireWildcard(_pixi);
+	
+	var _config = __webpack_require__(184);
+	
+	var _config2 = _interopRequireDefault(_config);
+	
+	var _gsap = __webpack_require__(188);
+	
+	var _gsap2 = _interopRequireDefault(_gsap);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var Trail = function (_PIXI$Container) {
+		_inherits(Trail, _PIXI$Container);
+	
+		function Trail(trailContainer) {
+			var points = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 30;
+			var texture = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'assets/images/rainbow-flag.jpg';
+	
+			_classCallCheck(this, Trail);
+	
+			var _this = _possibleConstructorReturn(this, (Trail.__proto__ || Object.getPrototypeOf(Trail)).call(this));
+	
+			_this.container = new PIXI.Container();
+			_this.addChild(_this.container);
+			_this.trailPoints = [];
+			_this.nextPointTimer = 0.1;
+	
+			_this.trailContainer = trailContainer;
+			_this.polygon = new PIXI.Graphics();
+			_this.trailContainer.addChild(_this.polygon);
+			_this.polyMesh = [];
+	
+			_this.totalPoints = points;
+	
+			_this.polyVerts = new Float32Array(_this.totalPoints * 2);
+			_this.polyUvs = new Float32Array(_this.totalPoints * 2);
+			_this.polyIndicies = new Uint16Array(_this.totalPoints);
+	
+			for (var i = 0; i < _this.totalPoints; i++) {
+				_this.polyUvs[i * 2] = 0.5;
+				_this.polyUvs[i * 2 + 1] = 1 * (1 - i % 2);
+			}
+	
+			for (var i = 0; i < _this.polyIndicies.length; i++) {
+				_this.polyIndicies[i] = i;
+			}
+	
+			_this.mesh = new PIXI.mesh.Mesh(PIXI.Texture.from(texture), _this.polyVerts, _this.polyUvs, _this.polyIndicies, PIXI.mesh.Mesh.DRAW_MODES.TRIANGLE_STRIP);
+			_this.trailContainer.addChild(_this.mesh);
+	
+			_this.trailTick = 15;
+			_this.speed = 0.08;
+			_this.frequency = 0.01;
+	
+			_this.firstIteraction = true;
+	
+			_this.trailDots = [];
+	
+			for (var i = 0; i < _this.totalPoints; i++) {
+				var tPoint = new PIXI.Container();
+				var gr = new PIXI.Graphics().beginFill(0xFFFFFF).drawCircle(0, 0, _this.trailTick / 2);
+				var gr2 = new PIXI.Graphics().beginFill(0x000000).drawCircle(0, -_this.trailTick / 2, 2);
+				tPoint.addChild(gr);
+				tPoint.addChild(gr2);
+				tPoint.alpha = 0.2;
+				tPoint.scale.set(0);
+				_this.trailDots.push(tPoint);
+			}
+	
+			_this.killed = true;
+	
+			return _this;
+		}
+	
+		_createClass(Trail, [{
+			key: 'changeTexture',
+			value: function changeTexture(texture) {
+				this.mesh.texture = texture;
+			}
+		}, {
+			key: 'scaleSort',
+			value: function scaleSort(a, b) {
+				var yA = a.scale.x;
+				var yB = b.scale.x;
+				if (yA < yB) {
+					return -1;
+				}
+				if (yA > yB) {
+					return 1;
+				}
+				return 0;
+			}
+		}, {
+			key: 'drawPointsTexture',
+			value: function drawPointsTexture() {
+				this.trailMesh = [];
+				this.polyMesh = [];
+	
+				var sin = 0;
+				var cos = 0;
+				var rod = 0;
+	
+				for (var i = this.trailDots.length - 2; i >= 0; i--) {
+					var point = this.trailDots[i];
+					var nextPoint = this.trailDots[i + 1];
+	
+					rod = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x);
+					sin = Math.sin(rod);
+					cos = Math.cos(rod);
+					var meshPoint = { x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos };
+					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos });
+					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * -sin, y: point.y + point.scale.x * this.trailTick * -cos });
+				}
+	
+				for (var i = 0; i < this.trailMesh.length; i++) {
+					this.polyMesh.push(this.trailMesh[i].x);
+					this.polyMesh.push(this.trailMesh[i].y);
+					this.polyVerts[i * 2] = this.trailMesh[i].x;
+					this.polyVerts[i * 2 + 1] = this.trailMesh[i].y;
+				}
+	
+				// this.polygon.clear();
+				// this.polygon.lineStyle(1,0);
+				// this.polygon.drawPolygon(this.polyMesh);
+				// this.polygon.endFill();
+				// this.trailContainer.addChild(this.polygon);
+			}
+		}, {
+			key: 'drawPoints',
+			value: function drawPoints() {
+				this.trailGraphic.clear();
+				if (this.trailPoints.length < 5) {
+					return;
+				}
+	
+				this.trailMesh = [];
+				this.trailGraphic.beginFill(0xffffff);
+				this.trailGraphic.alpha = 0.2;
+				this.trailGraphic.lineStyle(1, 0);
+				this.trailGraphic.blendMode = PIXI.BLEND_MODES.ADD;
+				var lastPoint = this.trailPoints[this.trailPoints.length - 1];
+				// let firstPoint = this.trailPoints[0];
+				var sin = 0;
+				var cos = 0;
+	
+				var rod = 0;
+	
+				var extraAngle = -3.14 / 4;
+				for (var i = 0; i < this.trailPoints.length - 1; i++) {
+					// rod = point.rotatio
+	
+					var point = this.trailPoints[i];
+					// if(point.scale.x > 0){
+					var nextPoint = this.trailPoints[i + 1];
+					rod = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) + extraAngle; //  * 180 / 3.14;
+					sin = Math.sin(rod);
+					cos = Math.cos(rod);
+					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos });
+					// }
+				}
+	
+				var flag1 = true;
+				for (var i = this.trailPoints.length - 1; i >= 1; i--) {
+					// rod = point.rotatio
+					var _point = this.trailPoints[i];
+					// if(point.scale.x > 0){
+					var _nextPoint = this.trailPoints[i - 1];
+					rod = Math.atan2(_nextPoint.y - _point.y, _nextPoint.x - _point.x) + extraAngle - 3.14; // * 180 / 3.14;
+					sin = Math.sin(rod);
+					cos = Math.cos(rod);
+	
+					var meshPoint = { x: _point.x + _point.scale.x * this.trailTick * sin, y: _point.y - _point.scale.x * this.trailTick * cos };
+					if (flag1) {
+						var last = this.trailMesh[this.trailMesh.length - 1];
+						var next = meshPoint;
+						var midleAngle = -Math.atan2(next.y - last.y, next.x - last.x);
+						var dist = this.distance(next.x, next.y, last.x, last.y) / 2;
+						var middleMeshPoint = {
+							x: _point.x + Math.sin(midleAngle) * dist,
+							y: _point.y + Math.cos(midleAngle) * dist
+						};
+						this.trailMesh.push(middleMeshPoint);
+						flag1 = false;
+					}
+					this.trailMesh.push(meshPoint);
+					// }
+				}
+	
+				this.trailGraphic.moveTo(this.trailMesh[i].x, this.trailMesh[i].y);
+				for (var i = 0; i < this.trailMesh.length - 1; i++) {
+					this.trailGraphic.lineTo(this.trailMesh[i].x, this.trailMesh[i].y);
+				}
+				// this.trailGraphic.lineTo(this.trailMesh[this.trailMesh.length-1].x + (this.trailMesh[this.trailMesh.length-1].x - lastPoint.x) / 2,
+				// 	this.trailMesh[this.trailMesh.length-1].y - lastPoint.y + (this.trailMesh[this.trailMesh.length-1].y - lastPoint.y) / 2);
+			}
+		}, {
+			key: 'updatePoint',
+			value: function updatePoint(pos) {
+	
+				if (this.firstIteraction) {
+					for (var i = 0; i < this.trailDots.length; i++) {
+						this.trailDots[i].x = pos.x;
+						this.trailDots[i].y = pos.y;
+					}
+					this.firstIteraction = false;
+				}
+	
+				if (this.trailDots.length) {
+					var firstPoint = this.trailDots[this.trailDots.length - 2];
+	
+					if (this.distance(firstPoint.x, firstPoint.y, pos.x, pos.y) < this.trailTick) {
+						// console.log('this');
+						this.nextPointTimer = this.frequency;
+						return;
+					}
+				}
+	
+				var dot = this.trailDots[0];
+				this.trailDots.splice(0, 1);
+				dot.x = pos.x;
+				dot.y = pos.y;
+				this.trailDots.push(dot);
+	
+				// dot.scale.set(1);
+				_gsap2.default.to(dot.scale, 0.1, { x: 1, y: 1 });
+				this.nextPointTimer = this.frequency;
+			}
+		}, {
+			key: 'distance',
+			value: function distance(x1, y1, x2, y2) {
+				return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+			}
+		}, {
+			key: 'build',
+			value: function build() {}
+		}, {
+			key: 'reset',
+			value: function reset() {
+				for (var i = this.trailDots.length - 1; i >= 0; i--) {
+					this.trailDots[i].scale.set(0);
+	
+					this.trailDots[i].x = this.trailDots[0].x;
+					this.trailDots[i].y = this.trailDots[0].y;
+				}
+				this.nextPointTimer = 0.2;
+				this.drawPointsTexture();
+			}
+		}, {
+			key: 'update',
+			value: function update(delta, pos) {
+	
+				this.nextPointTimer -= delta;
+	
+				var zeroScale = true;
+				for (var i = this.trailDots.length - 1; i >= 0; i--) {
+					this.trailDots[i].scale.x -= this.speed; //delta * this.speed;
+					this.trailDots[i].scale.y -= this.speed; //delta * this.speed;
+	
+					if (this.trailDots[i].scale.x <= 0) {
+						this.trailDots[i].scale.set(0);
+					} else {
+						zeroScale = false;
+					}
+				}
+	
+				// if(zeroScale){
+				this.killed = zeroScale;
+				// }
+	
+				if (this.nextPointTimer <= 0 && pos) {
+					this.updatePoint(pos);
+				}
+				this.drawPointsTexture();
+			}
+		}]);
+	
+		return Trail;
+	}(PIXI.Container);
+	
+	exports.default = Trail;
+
+/***/ },
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -46748,7 +47293,7 @@
 		}, {
 			key: 'toGame',
 			value: function toGame() {
-				this.screenManager.change('GameScreen');
+				this.screenManager.change('InitScreen');
 			}
 		}, {
 			key: 'startLoad',
@@ -46765,6 +47310,8 @@
 			key: 'onAssetsLoaded',
 			value: function onAssetsLoaded(evt) {
 	
+				this.toGame();
+				return;
 				var map = evt.resources[this.mapSrc].data;
 				var mapLayers = map.layers;
 	
@@ -46917,408 +47464,6 @@
 	}(_Screen3.default);
 	
 	exports.default = LoadScreen;
-
-/***/ },
-/* 194 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _pixi = __webpack_require__(1);
-	
-	var PIXI = _interopRequireWildcard(_pixi);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Ball = function (_PIXI$Container) {
-	    _inherits(Ball, _PIXI$Container);
-	
-	    function Ball(debug) {
-	        _classCallCheck(this, Ball);
-	
-	        var _this = _possibleConstructorReturn(this, (Ball.__proto__ || Object.getPrototypeOf(Ball)).call(this));
-	
-	        _this.virtualVelocity = { x: 0, y: 0 };
-	        _this.velocity = { x: 0, y: 0 };
-	        _this.speed = { x: 600, y: 600 };
-	        _this.friction = { x: 100, y: 100 };
-	        _this.scaleFator = 1;
-	        _this.standardScale = 1;
-	        _this.speedScale = 1;
-	        _this.starterScale = 0.5;
-	        _this.radius = 20;
-	        _this.externalRadius = 100;
-	        _this.static = false;
-	        _this.side = 1;
-	        _this.maxLife = 5;
-	        _this.life = 5;
-	        _this.collidable = true;
-	
-	        _this.container = new PIXI.Container();
-	
-	        _this.addChild(_this.container);
-	
-	        _this.externalColisionCircle = new PIXI.Graphics();
-	        _this.externalColisionCircle.lineStyle(1, 0xFFFF00);
-	        _this.externalColisionCircle.drawCircle(0, 0, _this.radius);
-	        _this.externalColisionCircle.alpha = 0.8;
-	        _this.container.addChild(_this.externalColisionCircle);
-	
-	        return _this;
-	    }
-	
-	    _createClass(Ball, [{
-	        key: 'getRadius',
-	        value: function getRadius() {
-	            return this.standardScale * this.radius;
-	        }
-	    }, {
-	        key: 'getExternalRadius',
-	        value: function getExternalRadius() {
-	            return this.standardScale * this.externalRadius;
-	        }
-	    }, {
-	        key: 'update',
-	        value: function update(delta) {
-	            this.x += this.velocity.x * delta;
-	            this.y += this.velocity.y * delta;
-	
-	            if (this.velocity.x < this.virtualVelocity.x) {
-	                this.velocity.x += this.friction.x * delta;
-	                if (this.velocity.x > this.virtualVelocity.x) {
-	                    this.velocity.x = this.virtualVelocity.x;
-	                }
-	            } else if (this.velocity.x > this.virtualVelocity.x) {
-	                this.velocity.x -= this.friction.x * delta;
-	                if (this.velocity.x < this.virtualVelocity.x) {
-	                    this.velocity.x = this.virtualVelocity.x;
-	                }
-	            }
-	
-	            if (this.velocity.y < this.virtualVelocity.y) {
-	                this.velocity.y += this.friction.y * delta;
-	                if (this.velocity.y > this.virtualVelocity.y) {
-	                    this.velocity.y = this.virtualVelocity.y;
-	                }
-	            } else if (this.velocity.y > this.virtualVelocity.y) {
-	                this.velocity.y -= this.friction.y * delta;
-	                if (this.velocity.y < this.virtualVelocity.y) {
-	                    this.velocity.y = this.virtualVelocity.y;
-	                }
-	            }
-	        }
-	    }]);
-	
-	    return Ball;
-	}(PIXI.Container);
-	
-	exports.default = Ball;
-
-/***/ },
-/* 195 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _pixi = __webpack_require__(1);
-	
-	var PIXI = _interopRequireWildcard(_pixi);
-	
-	var _config = __webpack_require__(184);
-	
-	var _config2 = _interopRequireDefault(_config);
-	
-	var _gsap = __webpack_require__(188);
-	
-	var _gsap2 = _interopRequireDefault(_gsap);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-	
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	var Trail = function (_PIXI$Container) {
-		_inherits(Trail, _PIXI$Container);
-	
-		function Trail(trailContainer) {
-			var points = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 30;
-			var texture = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'assets/images/rainbow-flag.jpg';
-	
-			_classCallCheck(this, Trail);
-	
-			var _this = _possibleConstructorReturn(this, (Trail.__proto__ || Object.getPrototypeOf(Trail)).call(this));
-	
-			_this.container = new PIXI.Container();
-			_this.addChild(_this.container);
-			_this.trailPoints = [];
-			_this.nextPointTimer = 0.1;
-	
-			_this.trailContainer = trailContainer;
-			_this.polygon = new PIXI.Graphics();
-			_this.trailContainer.addChild(_this.polygon);
-			_this.polyMesh = [];
-	
-			_this.totalPoints = points;
-	
-			_this.polyVerts = new Float32Array(_this.totalPoints * 2);
-			_this.polyUvs = new Float32Array(_this.totalPoints * 2);
-			_this.polyIndicies = new Uint16Array(_this.totalPoints);
-	
-			for (var i = 0; i < _this.totalPoints; i++) {
-				_this.polyUvs[i * 2] = 0.5;
-				_this.polyUvs[i * 2 + 1] = 1 * (1 - i % 2);
-			}
-	
-			for (var i = 0; i < _this.polyIndicies.length; i++) {
-				_this.polyIndicies[i] = i;
-			}
-	
-			_this.mesh = new PIXI.mesh.Mesh(PIXI.Texture.from(texture), _this.polyVerts, _this.polyUvs, _this.polyIndicies, PIXI.mesh.Mesh.DRAW_MODES.TRIANGLE_STRIP);
-			_this.trailContainer.addChild(_this.mesh);
-	
-			_this.trailTick = 15;
-			_this.speed = 0.08;
-			_this.frequency = 0.01;
-	
-			_this.firstIteraction = true;
-	
-			_this.trailDots = [];
-	
-			for (var i = 0; i < _this.totalPoints; i++) {
-				var tPoint = new PIXI.Container();
-				var gr = new PIXI.Graphics().beginFill(0xFFFFFF).drawCircle(0, 0, _this.trailTick / 2);
-				var gr2 = new PIXI.Graphics().beginFill(0x000000).drawCircle(0, -_this.trailTick / 2, 2);
-				tPoint.addChild(gr);
-				tPoint.addChild(gr2);
-				tPoint.alpha = 0.2;
-				tPoint.scale.set(0);
-				_this.trailDots.push(tPoint);
-			}
-	
-			return _this;
-		}
-	
-		_createClass(Trail, [{
-			key: 'changeTexture',
-			value: function changeTexture(texture) {
-				this.mesh.texture = texture;
-			}
-		}, {
-			key: 'scaleSort',
-			value: function scaleSort(a, b) {
-				var yA = a.scale.x;
-				var yB = b.scale.x;
-				if (yA < yB) {
-					return -1;
-				}
-				if (yA > yB) {
-					return 1;
-				}
-				return 0;
-			}
-		}, {
-			key: 'drawPointsTexture',
-			value: function drawPointsTexture() {
-				this.trailMesh = [];
-				this.polyMesh = [];
-	
-				var sin = 0;
-				var cos = 0;
-				var rod = 0;
-	
-				for (var i = this.trailDots.length - 2; i >= 0; i--) {
-					var point = this.trailDots[i];
-					var nextPoint = this.trailDots[i + 1];
-	
-					rod = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x);
-					sin = Math.sin(rod);
-					cos = Math.cos(rod);
-					var meshPoint = { x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos };
-					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos });
-					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * -sin, y: point.y + point.scale.x * this.trailTick * -cos });
-				}
-	
-				for (var i = 0; i < this.trailMesh.length; i++) {
-					this.polyMesh.push(this.trailMesh[i].x);
-					this.polyMesh.push(this.trailMesh[i].y);
-					this.polyVerts[i * 2] = this.trailMesh[i].x;
-					this.polyVerts[i * 2 + 1] = this.trailMesh[i].y;
-				}
-	
-				// this.polygon.clear();
-				// this.polygon.lineStyle(1,0);
-				// this.polygon.drawPolygon(this.polyMesh);
-				// this.polygon.endFill();
-				// this.trailContainer.addChild(this.polygon);
-			}
-		}, {
-			key: 'drawPoints',
-			value: function drawPoints() {
-				this.trailGraphic.clear();
-				if (this.trailPoints.length < 5) {
-					return;
-				}
-	
-				this.trailMesh = [];
-				this.trailGraphic.beginFill(0xffffff);
-				this.trailGraphic.alpha = 0.2;
-				this.trailGraphic.lineStyle(1, 0);
-				this.trailGraphic.blendMode = PIXI.BLEND_MODES.ADD;
-				var lastPoint = this.trailPoints[this.trailPoints.length - 1];
-				// let firstPoint = this.trailPoints[0];
-				var sin = 0;
-				var cos = 0;
-	
-				var rod = 0;
-	
-				var extraAngle = -3.14 / 4;
-				for (var i = 0; i < this.trailPoints.length - 1; i++) {
-					// rod = point.rotatio
-	
-					var point = this.trailPoints[i];
-					// if(point.scale.x > 0){
-					var nextPoint = this.trailPoints[i + 1];
-					rod = Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) + extraAngle; //  * 180 / 3.14;
-					sin = Math.sin(rod);
-					cos = Math.cos(rod);
-					this.trailMesh.push({ x: point.x - point.scale.x * this.trailTick * sin, y: point.y + point.scale.x * this.trailTick * cos });
-					// }
-				}
-	
-				var flag1 = true;
-				for (var i = this.trailPoints.length - 1; i >= 1; i--) {
-					// rod = point.rotatio
-					var _point = this.trailPoints[i];
-					// if(point.scale.x > 0){
-					var _nextPoint = this.trailPoints[i - 1];
-					rod = Math.atan2(_nextPoint.y - _point.y, _nextPoint.x - _point.x) + extraAngle - 3.14; // * 180 / 3.14;
-					sin = Math.sin(rod);
-					cos = Math.cos(rod);
-	
-					var meshPoint = { x: _point.x + _point.scale.x * this.trailTick * sin, y: _point.y - _point.scale.x * this.trailTick * cos };
-					if (flag1) {
-						var last = this.trailMesh[this.trailMesh.length - 1];
-						var next = meshPoint;
-						var midleAngle = -Math.atan2(next.y - last.y, next.x - last.x);
-						var dist = this.distance(next.x, next.y, last.x, last.y) / 2;
-						var middleMeshPoint = {
-							x: _point.x + Math.sin(midleAngle) * dist,
-							y: _point.y + Math.cos(midleAngle) * dist
-						};
-						this.trailMesh.push(middleMeshPoint);
-						flag1 = false;
-					}
-					this.trailMesh.push(meshPoint);
-					// }
-				}
-	
-				this.trailGraphic.moveTo(this.trailMesh[i].x, this.trailMesh[i].y);
-				for (var i = 0; i < this.trailMesh.length; i++) {
-					this.trailGraphic.lineTo(this.trailMesh[i].x, this.trailMesh[i].y);
-				}
-				// this.trailGraphic.lineTo(this.trailMesh[this.trailMesh.length-1].x + (this.trailMesh[this.trailMesh.length-1].x - lastPoint.x) / 2,
-				// 	this.trailMesh[this.trailMesh.length-1].y - lastPoint.y + (this.trailMesh[this.trailMesh.length-1].y - lastPoint.y) / 2);
-			}
-		}, {
-			key: 'updatePoint',
-			value: function updatePoint(pos) {
-	
-				if (this.firstIteraction) {
-					for (var i = 0; i < this.trailDots.length; i++) {
-						this.trailDots[i].x = pos.x;
-						this.trailDots[i].y = pos.y;
-					}
-					this.firstIteraction = false;
-				}
-	
-				if (this.trailDots.length) {
-					var firstPoint = this.trailDots[0];
-	
-					if (this.distance(firstPoint.x, firstPoint.y, pos.x, pos.y) < this.trailTick) {
-						this.nextPointTimer = this.frequency;
-						return;
-					}
-				}
-	
-				var dot = this.trailDots[0];
-				this.trailDots.splice(0, 1);
-				dot.x = pos.x;
-				dot.y = pos.y;
-				this.trailDots.push(dot);
-	
-				// dot.scale.set(1);
-				_gsap2.default.to(dot.scale, 0.1, { x: 1, y: 1 });
-				this.nextPointTimer = this.frequency;
-			}
-		}, {
-			key: 'distance',
-			value: function distance(x1, y1, x2, y2) {
-				return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-			}
-		}, {
-			key: 'build',
-			value: function build() {}
-		}, {
-			key: 'reset',
-			value: function reset() {
-				for (var i = this.trailDots.length - 1; i >= 0; i--) {
-					this.trailDots[i].scale.set(0);
-	
-					this.trailDots[i].x = this.trailDots[0].x;
-					this.trailDots[i].y = this.trailDots[0].y;
-				}
-				this.nextPointTimer = 0.2;
-				this.drawPointsTexture();
-			}
-		}, {
-			key: 'update',
-			value: function update(delta, pos) {
-	
-				this.nextPointTimer -= delta;
-	
-				for (var i = this.trailDots.length - 1; i >= 0; i--) {
-					this.trailDots[i].scale.x -= this.speed; //delta * this.speed;
-					this.trailDots[i].scale.y -= this.speed; //delta * this.speed;
-	
-					if (this.trailDots[i].scale.x <= 0) {
-						this.trailDots[i].scale.set(0);
-					}
-				}
-	
-				if (this.nextPointTimer <= 0) {
-					this.updatePoint(pos);
-				}
-				this.drawPointsTexture();
-			}
-		}]);
-	
-		return Trail;
-	}(PIXI.Container);
-	
-	exports.default = Trail;
 
 /***/ }
 /******/ ]);

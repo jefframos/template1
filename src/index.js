@@ -35,7 +35,7 @@ function configGame(){
 	screenManager.addScreen(initScreen);
 	screenManager.addScreen(loadScreen);
 	//change to init screen
-	screenManager.forceChange('InitScreen');
+	screenManager.forceChange('LoadScreen');
 
 	// screenManager.filters = [this.pixelate]
 

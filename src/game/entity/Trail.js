@@ -56,6 +56,8 @@ export default class Trail extends PIXI.Container{
 			this.trailDots.push(tPoint);
 		}
 
+		this.killed = true;
+
 
 	}
 
@@ -175,7 +177,7 @@ export default class Trail extends PIXI.Container{
 
 
 		this.trailGraphic.moveTo(this.trailMesh[i].x, this.trailMesh[i].y);
-		for (var i = 0; i<this.trailMesh.length; i++) {
+		for (var i = 0; i<this.trailMesh.length-1; i++) {
 			this.trailGraphic.lineTo(this.trailMesh[i].x, this.trailMesh[i].y);
 		}
 		// this.trailGraphic.lineTo(this.trailMesh[this.trailMesh.length-1].x + (this.trailMesh[this.trailMesh.length-1].x - lastPoint.x) / 2,
@@ -192,9 +194,10 @@ export default class Trail extends PIXI.Container{
 		}
 
 		if(this.trailDots.length){
-			let firstPoint = this.trailDots[0];
+			let firstPoint = this.trailDots[this.trailDots.length - 2];
 
 			if(this.distance(firstPoint.x,firstPoint.y,pos.x,pos.y) < this.trailTick){
+				// console.log('this');
 				this.nextPointTimer = this.frequency
 				return;
 			}
@@ -233,16 +236,23 @@ export default class Trail extends PIXI.Container{
 
 		this.nextPointTimer -= delta;
 
+		let zeroScale = true;
 		for (var i = this.trailDots.length - 1; i >= 0; i--) {
 			this.trailDots[i].scale.x -= this.speed//delta * this.speed;
 			this.trailDots[i].scale.y -= this.speed//delta * this.speed;
 
 			if(this.trailDots[i].scale.x <= 0){
 				this.trailDots[i].scale.set(0)
+			}else{
+				zeroScale = false;
 			}
 		}
 
-		if(this.nextPointTimer <= 0){
+		// if(zeroScale){
+		this.killed = zeroScale;
+		// }
+
+		if(this.nextPointTimer <= 0 && pos){
 			this.updatePoint(pos);
 		}
 		this.drawPointsTexture();
