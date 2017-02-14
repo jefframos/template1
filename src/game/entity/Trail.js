@@ -9,7 +9,7 @@ export default class Trail extends PIXI.Container{
 		this.container = new PIXI.Container();
 		this.addChild(this.container);
 		this.trailPoints = [];
-		this.nextPointTimer = 0.1;
+		this.nextPointTimer = 0;
 
 		this.trailContainer = trailContainer;
 		this.polygon = new PIXI.Graphics()
@@ -221,14 +221,31 @@ export default class Trail extends PIXI.Container{
 
 	}
 
-	reset(){
+	reset(pos = null){
 		for (var i = this.trailDots.length - 1; i >= 0; i--) {
 			this.trailDots[i].scale.set(0);
+			if(pos){
+				this.trailDots[i].x = pos.x;
+				this.trailDots[i].y = pos.y;
+			}else{
 
-			this.trailDots[i].x = this.trailDots[0].x;
-			this.trailDots[i].y = this.trailDots[0].y;
+				this.trailDots[i].x = this.trailDots[0].x;
+				this.trailDots[i].y = this.trailDots[0].y;
+			}
 		}
-		this.nextPointTimer = 0.2;
+		// this.trailDots = [];
+
+		// for (var i = 0; i < this.totalPoints; i++) {
+		// 	let tPoint = new PIXI.Container();
+		// 	let gr = new PIXI.Graphics().beginFill(0xFFFFFF).drawCircle(0,0,this.trailTick/2);
+		// 	let gr2 = new PIXI.Graphics().beginFill(0x000000).drawCircle(0,-this.trailTick/2,2);
+		// 	tPoint.addChild(gr)
+		// 	tPoint.addChild(gr2)
+		// 	tPoint.alpha = 0.2
+		// 	tPoint.scale.set(0)
+		// 	this.trailDots.push(tPoint);
+		// }
+		this.nextPointTimer = 0;
 		this.drawPointsTexture();
 	}
 

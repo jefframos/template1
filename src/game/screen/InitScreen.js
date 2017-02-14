@@ -44,7 +44,7 @@ export default class InitScreen extends Screen{
         this.animationManager.stopAll();
         this.animationManager.changeState('idle');
 
-        this.ball = new Ball(50);
+        this.ball = new Ball(this,50);
 
         this.addChild(this.ball)
 
@@ -55,7 +55,7 @@ export default class InitScreen extends Screen{
         // this.ball.virtualVelocity.x = 0;
         // this.ball.virtualVelocity.y = 0;
 
-        this.ball2 = new Ball();
+        this.ball2 = new Ball(this);
 
         this.addChild(this.ball2)
 
@@ -63,7 +63,7 @@ export default class InitScreen extends Screen{
         this.ball2.y = 400;
 
 
-        this.ball3 = new Ball();
+        this.ball3 = new Ball(this);
 
         this.addChild(this.ball3)
 
@@ -87,25 +87,33 @@ export default class InitScreen extends Screen{
 	getTrail(){
 		for (var i = this.trailPool.length - 1; i >= 0; i--) {
 			if(this.trailPool[i].killed){
+				this.trailPool[i].reset(this.mousePosition);
 				return this.trailPool[i]
 			}
 		}
-		let trail = new Trail(this.ingameUIContainer, 200, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
+		let trail = new Trail(this.ingameUIContainer, 50, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
 		trail.trailTick = 15;
 		trail.speed = 0.01;
 		trail.frequency = 0.0001
 		this.trailPool.push(trail);
 		return trail;
 	}
+	reset(){
+		this.ball.x = config.width * 1.1;
+        this.ball.y = config.height - 180;
+        this.ball.reset();
+        this.ball.virtualVelocity.x = -this.ball.speed.x;
+        this.ball.velocity.x = -this.ball.speed.x;
+	}
 	collideBounds(delta, entity){
 
 		if(entity.velocity.x > 0){
-			if(entity.x > config.width *0.85){
+			if(entity.x > config.width - 15){
 				entity.velocity.x *= -0.5;
 				entity.x += entity.velocity.x * delta;
 			}
 		}else if(entity.velocity.x < 0){
-			if(entity.x < config.width *0.15){
+			if(entity.x < 15){
 				entity.velocity.x *= -0.5;
 				entity.x += entity.velocity.x * delta
 			}
@@ -117,9 +125,12 @@ export default class InitScreen extends Screen{
 				entity.y += entity.velocity.y * delta;
 			}
 		}else if(entity.velocity.y < 0){
-			if(entity.y < config.height * 0.2){
+			if(entity.y < -config.height * 0.05){
 				entity.velocity.y *= -0.5;
+
 				entity.y += entity.velocity.y * delta;
+
+				this.reset();
 			}
 		}
 	}
@@ -137,6 +148,8 @@ export default class InitScreen extends Screen{
 	update(delta){
 		super.update(delta);
 
+		let perspectiveFactor = 1-this.ball.y / config.height
+		this.ball.scale.set(1.2 - perspectiveFactor*0.8)
 
 		this.mousePosition = renderer.plugins.interaction.pointer.global;
 		// if(this.currentTrail)
@@ -150,8 +163,8 @@ export default class InitScreen extends Screen{
 			this.currentTrail.update(delta, this.mousePosition)
 		}
 
-		this.collide(delta, this.ball, this.ball2)
-		this.collide(delta, this.ball, this.ball3)
+		// this.collide(delta, this.ball, this.ball2)
+		// this.collide(delta, this.ball, this.ball3)
 		this.collideBounds(delta, this.ball)
 
 
@@ -182,7 +195,7 @@ export default class InitScreen extends Screen{
 	    b = (v1.x * v2.x + v1.y * v2.y);
 	    c = 2 * (v1.x * v1.x + v1.y * v1.y);
 	    b *= -2;
-	    d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.radius * circle.radius));
+	    d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.getExternalRadius() * circle.getExternalRadius()));
 	    if(isNaN(d)){ // no intercept
 	        return [];
 	    }
@@ -228,9 +241,9 @@ export default class InitScreen extends Screen{
         let angSpeed = angleColision;
         // let angSpeed = this.ball.rotation - angleColision;
         // this.ball.rotation += angleColision// * 0.5;
-        let force = utils.distance(this.firstPoint.x, this.firstPoint.y, this.secPoint.x, this.secPoint.y) * 0.01
+        let force = utils.distance(this.firstPoint.x, this.firstPoint.y, this.secPoint.x, this.secPoint.y) * 0.025
         // console.log(force);
-        this.ball.rotationSpeed = angSpeed * 1// * 0.5;
+        this.ball.rotationSpeed = angSpeed * 0.8// * 0.5;
         this.ball.velocity.x = 0;
         this.ball.velocity.y = 0;
         this.ball.velocity.x = -this.ball.speed.x * Math.sin(angle) * force;
@@ -238,6 +251,7 @@ export default class InitScreen extends Screen{
 
         this.ball.virtualVelocity.x = 0;
         this.ball.virtualVelocity.y = 0;
+        this.ball.shoot();
 	}
 	onTapUp(){
 		this.currentTrail = null;
@@ -246,8 +260,11 @@ export default class InitScreen extends Screen{
 		// console.log(renderer.plugins.interaction);
 	}
 	onTapDown(){
-		// this.currentTrail = this.getTrail();
-		// this.currentTrail.update(0, this.mousePosition)
+		this.currentTrail = this.getTrail();
+		this.currentTrail.mesh.alpha = 0.2;
+		this.currentTrail.mesh.blendMode = PIXI.BLEND_MODES.ADD;
+		this.currentTrail.speed = 0.1
+		this.currentTrail.update(0, this.mousePosition)
 		this.tapping = true;
 		this.firstPoint = {x:this.mousePosition.x,y:this.mousePosition.y};
 	}

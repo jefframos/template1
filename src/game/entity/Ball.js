@@ -1,19 +1,21 @@
 import * as PIXI from 'pixi.js';
 export default class Ball extends PIXI.Container {
 
-    constructor(radius = 20) {  
+    constructor(game, radius = 20) {
         super();  
+        this.game = game;
         this.virtualVelocity = {x:0,y:0};
         this.velocity = {x:0,y:0};
-        this.speed = {x:600,y:600};
+        this.speed = {x:250,y:250};
         this.friction = {x:100,y:100};
+        this.rotationInfluence = {x:0,y:0};
         this.rotationSpeed = 0;
         this.scaleFator = 1;
         this.standardScale = 1;
         this.speedScale = 1;
         this.starterScale = 0.5;
         this.radius = radius;
-        this.externalRadius = 100;
+        this.externalRadius = this.radius*1.1;
         this.static = false;
         this.side = 1;
         this.maxLife = 5;
@@ -38,10 +40,23 @@ export default class Ball extends PIXI.Container {
         // this.externalColisionCircle.alpha = 0.8;
         // this.container.addChild(this.externalColisionCircle);
 
-
+        this.shooting = false;
     }
    
 
+    shoot() {
+        this.shooting = true;
+        this.rotationInfluence.x = this.rotationSpeed * 1000;
+        console.log(this.rotationSpeed);
+        console.log(this.rotationInfluence);
+    }
+    reset() {
+        this.virtualVelocity = {x:0,y:0};
+        this.velocity = {x:0,y:0};
+        this.rotationInfluence = {x:0,y:0};
+        this.rotationSpeed = 0;
+        this.shooting = false;
+    }
     getRadius() {
         return this.standardScale * this.radius;
     }
@@ -50,19 +65,38 @@ export default class Ball extends PIXI.Container {
     }
 
     update ( delta ) {
-        this.x += this.velocity.x * delta;
-        this.y += this.velocity.y * delta;
+        this.x += this.velocity.x * delta * this.scale.x;
+        this.y += this.velocity.y * delta * this.scale.y;
 
         let percentage = Math.abs((Math.abs(this.velocity.x) + Math.abs(this.velocity.y)) / 
             (Math.abs(this.speed.x) + Math.abs(this.speed.y)));
         // console.log(this.rotationSpeed);
-        this.rotation += this.rotationSpeed * percentage;
+        this.rotation += this.rotationSpeed * percentage * 0.5;
+
+        if(this.shooting && percentage == 0){
+            this.game.reset();
+        }
+        if(percentage){
+            this.velocity.x += this.rotationInfluence.x * delta * percentage;
+
+            // console.log(this.rotationInfluence.x);
+            // this.velocity.y += Math.cos(this.rotation);
+        }
 
 
-        // if(percentage){
-        //     this.velocity.x += Math.sin(this.rotation);
-        //     this.velocity.y += Math.cos(this.rotation);
-        // }
+        if(this.rotationInfluence.x < 0){
+            this.rotationInfluence.x += this.friction.x * delta;
+            if(this.rotationInfluence.x > 0){
+                this.rotationInfluence.x = 0
+            }
+        }else if(this.rotationInfluence.x > 0){
+            this.rotationInfluence.x -= this.friction.x * delta;
+            if(this.rotationInfluence.x < 0){
+                this.rotationInfluence.x = 0
+            }
+        }
+
+
 
         if(this.velocity.x < this.virtualVelocity.x){
             this.velocity.x += this.friction.x * delta;

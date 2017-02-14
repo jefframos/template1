@@ -37788,8 +37788,8 @@
 		value: true
 	});
 	exports.default = {
-		width: 414,
-		height: 736,
+		width: window.innerWidth / 2,
+		height: window.innerHeight / 2,
 		webgl: true,
 		tileWidth: true,
 		effectsLayer: null,
@@ -38087,7 +38087,7 @@
 				this.animationManager.stopAll();
 				this.animationManager.changeState('idle');
 	
-				this.ball = new _Ball2.default(50);
+				this.ball = new _Ball2.default(this, 50);
 	
 				this.addChild(this.ball);
 	
@@ -38098,14 +38098,14 @@
 				// this.ball.virtualVelocity.x = 0;
 				// this.ball.virtualVelocity.y = 0;
 	
-				this.ball2 = new _Ball2.default();
+				this.ball2 = new _Ball2.default(this);
 	
 				this.addChild(this.ball2);
 	
 				this.ball2.x = 200;
 				this.ball2.y = 400;
 	
-				this.ball3 = new _Ball2.default();
+				this.ball3 = new _Ball2.default(this);
 	
 				this.addChild(this.ball3);
 	
@@ -38130,10 +38130,11 @@
 			value: function getTrail() {
 				for (var i = this.trailPool.length - 1; i >= 0; i--) {
 					if (this.trailPool[i].killed) {
+						this.trailPool[i].reset(this.mousePosition);
 						return this.trailPool[i];
 					}
 				}
-				var trail = new _Trail2.default(this.ingameUIContainer, 200, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
+				var trail = new _Trail2.default(this.ingameUIContainer, 50, PIXI.Texture.from('assets/images/rainbow-flag2.jpg'));
 				trail.trailTick = 15;
 				trail.speed = 0.01;
 				trail.frequency = 0.0001;
@@ -38141,16 +38142,25 @@
 				return trail;
 			}
 		}, {
+			key: 'reset',
+			value: function reset() {
+				this.ball.x = _config2.default.width * 1.1;
+				this.ball.y = _config2.default.height - 180;
+				this.ball.reset();
+				this.ball.virtualVelocity.x = -this.ball.speed.x;
+				this.ball.velocity.x = -this.ball.speed.x;
+			}
+		}, {
 			key: 'collideBounds',
 			value: function collideBounds(delta, entity) {
 	
 				if (entity.velocity.x > 0) {
-					if (entity.x > _config2.default.width * 0.85) {
+					if (entity.x > _config2.default.width - 15) {
 						entity.velocity.x *= -0.5;
 						entity.x += entity.velocity.x * delta;
 					}
 				} else if (entity.velocity.x < 0) {
-					if (entity.x < _config2.default.width * 0.15) {
+					if (entity.x < 15) {
 						entity.velocity.x *= -0.5;
 						entity.x += entity.velocity.x * delta;
 					}
@@ -38162,9 +38172,12 @@
 						entity.y += entity.velocity.y * delta;
 					}
 				} else if (entity.velocity.y < 0) {
-					if (entity.y < _config2.default.height * 0.2) {
+					if (entity.y < -_config2.default.height * 0.05) {
 						entity.velocity.y *= -0.5;
+	
 						entity.y += entity.velocity.y * delta;
+	
+						this.reset();
 					}
 				}
 			}
@@ -38184,6 +38197,9 @@
 			value: function update(delta) {
 				_get(InitScreen.prototype.__proto__ || Object.getPrototypeOf(InitScreen.prototype), 'update', this).call(this, delta);
 	
+				var perspectiveFactor = 1 - this.ball.y / _config2.default.height;
+				this.ball.scale.set(1.2 - perspectiveFactor * 0.8);
+	
 				this.mousePosition = renderer.plugins.interaction.pointer.global;
 				// if(this.currentTrail)
 				this.verifyInterception();
@@ -38196,8 +38212,8 @@
 					this.currentTrail.update(delta, this.mousePosition);
 				}
 	
-				this.collide(delta, this.ball, this.ball2);
-				this.collide(delta, this.ball, this.ball3);
+				// this.collide(delta, this.ball, this.ball2)
+				// this.collide(delta, this.ball, this.ball3)
 				this.collideBounds(delta, this.ball);
 			}
 			// bkp(){
@@ -38228,7 +38244,7 @@
 				b = v1.x * v2.x + v1.y * v2.y;
 				c = 2 * (v1.x * v1.x + v1.y * v1.y);
 				b *= -2;
-				d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.radius * circle.radius));
+				d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.getExternalRadius() * circle.getExternalRadius()));
 				if (isNaN(d)) {
 					// no intercept
 					return [];
@@ -38279,9 +38295,9 @@
 				var angSpeed = angleColision;
 				// let angSpeed = this.ball.rotation - angleColision;
 				// this.ball.rotation += angleColision// * 0.5;
-				var force = _utils2.default.distance(this.firstPoint.x, this.firstPoint.y, this.secPoint.x, this.secPoint.y) * 0.01;
+				var force = _utils2.default.distance(this.firstPoint.x, this.firstPoint.y, this.secPoint.x, this.secPoint.y) * 0.025;
 				// console.log(force);
-				this.ball.rotationSpeed = angSpeed * 1; // * 0.5;
+				this.ball.rotationSpeed = angSpeed * 0.8; // * 0.5;
 				this.ball.velocity.x = 0;
 				this.ball.velocity.y = 0;
 				this.ball.velocity.x = -this.ball.speed.x * Math.sin(angle) * force;
@@ -38289,6 +38305,7 @@
 	
 				this.ball.virtualVelocity.x = 0;
 				this.ball.virtualVelocity.y = 0;
+				this.ball.shoot();
 			}
 		}, {
 			key: 'onTapUp',
@@ -38301,8 +38318,11 @@
 		}, {
 			key: 'onTapDown',
 			value: function onTapDown() {
-				// this.currentTrail = this.getTrail();
-				// this.currentTrail.update(0, this.mousePosition)
+				this.currentTrail = this.getTrail();
+				this.currentTrail.mesh.alpha = 0.2;
+				this.currentTrail.mesh.blendMode = PIXI.BLEND_MODES.ADD;
+				this.currentTrail.speed = 0.1;
+				this.currentTrail.update(0, this.mousePosition);
 				this.tapping = true;
 				this.firstPoint = { x: this.mousePosition.x, y: this.mousePosition.y };
 			}
@@ -46636,24 +46656,26 @@
 	var Ball = function (_PIXI$Container) {
 	    _inherits(Ball, _PIXI$Container);
 	
-	    function Ball() {
-	        var radius = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 20;
+	    function Ball(game) {
+	        var radius = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 20;
 	
 	        _classCallCheck(this, Ball);
 	
 	        var _this = _possibleConstructorReturn(this, (Ball.__proto__ || Object.getPrototypeOf(Ball)).call(this));
 	
+	        _this.game = game;
 	        _this.virtualVelocity = { x: 0, y: 0 };
 	        _this.velocity = { x: 0, y: 0 };
-	        _this.speed = { x: 600, y: 600 };
+	        _this.speed = { x: 250, y: 250 };
 	        _this.friction = { x: 100, y: 100 };
+	        _this.rotationInfluence = { x: 0, y: 0 };
 	        _this.rotationSpeed = 0;
 	        _this.scaleFator = 1;
 	        _this.standardScale = 1;
 	        _this.speedScale = 1;
 	        _this.starterScale = 0.5;
 	        _this.radius = radius;
-	        _this.externalRadius = 100;
+	        _this.externalRadius = _this.radius * 1.1;
 	        _this.static = false;
 	        _this.side = 1;
 	        _this.maxLife = 5;
@@ -46677,11 +46699,28 @@
 	        // this.externalColisionCircle.alpha = 0.8;
 	        // this.container.addChild(this.externalColisionCircle);
 	
-	
+	        _this.shooting = false;
 	        return _this;
 	    }
 	
 	    _createClass(Ball, [{
+	        key: 'shoot',
+	        value: function shoot() {
+	            this.shooting = true;
+	            this.rotationInfluence.x = this.rotationSpeed * 1000;
+	            console.log(this.rotationSpeed);
+	            console.log(this.rotationInfluence);
+	        }
+	    }, {
+	        key: 'reset',
+	        value: function reset() {
+	            this.virtualVelocity = { x: 0, y: 0 };
+	            this.velocity = { x: 0, y: 0 };
+	            this.rotationInfluence = { x: 0, y: 0 };
+	            this.rotationSpeed = 0;
+	            this.shooting = false;
+	        }
+	    }, {
 	        key: 'getRadius',
 	        value: function getRadius() {
 	            return this.standardScale * this.radius;
@@ -46694,17 +46733,34 @@
 	    }, {
 	        key: 'update',
 	        value: function update(delta) {
-	            this.x += this.velocity.x * delta;
-	            this.y += this.velocity.y * delta;
+	            this.x += this.velocity.x * delta * this.scale.x;
+	            this.y += this.velocity.y * delta * this.scale.y;
 	
 	            var percentage = Math.abs((Math.abs(this.velocity.x) + Math.abs(this.velocity.y)) / (Math.abs(this.speed.x) + Math.abs(this.speed.y)));
 	            // console.log(this.rotationSpeed);
-	            this.rotation += this.rotationSpeed * percentage;
+	            this.rotation += this.rotationSpeed * percentage * 0.5;
 	
-	            // if(percentage){
-	            //     this.velocity.x += Math.sin(this.rotation);
-	            //     this.velocity.y += Math.cos(this.rotation);
-	            // }
+	            if (this.shooting && percentage == 0) {
+	                this.game.reset();
+	            }
+	            if (percentage) {
+	                this.velocity.x += this.rotationInfluence.x * delta * percentage;
+	
+	                // console.log(this.rotationInfluence.x);
+	                // this.velocity.y += Math.cos(this.rotation);
+	            }
+	
+	            if (this.rotationInfluence.x < 0) {
+	                this.rotationInfluence.x += this.friction.x * delta;
+	                if (this.rotationInfluence.x > 0) {
+	                    this.rotationInfluence.x = 0;
+	                }
+	            } else if (this.rotationInfluence.x > 0) {
+	                this.rotationInfluence.x -= this.friction.x * delta;
+	                if (this.rotationInfluence.x < 0) {
+	                    this.rotationInfluence.x = 0;
+	                }
+	            }
 	
 	            if (this.velocity.x < this.virtualVelocity.x) {
 	                this.velocity.x += this.friction.x * delta;
@@ -46972,7 +47028,7 @@
 			_this.container = new PIXI.Container();
 			_this.addChild(_this.container);
 			_this.trailPoints = [];
-			_this.nextPointTimer = 0.1;
+			_this.nextPointTimer = 0;
 	
 			_this.trailContainer = trailContainer;
 			_this.polygon = new PIXI.Graphics();
@@ -47185,13 +47241,32 @@
 		}, {
 			key: 'reset',
 			value: function reset() {
+				var pos = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	
 				for (var i = this.trailDots.length - 1; i >= 0; i--) {
 					this.trailDots[i].scale.set(0);
+					if (pos) {
+						this.trailDots[i].x = pos.x;
+						this.trailDots[i].y = pos.y;
+					} else {
 	
-					this.trailDots[i].x = this.trailDots[0].x;
-					this.trailDots[i].y = this.trailDots[0].y;
+						this.trailDots[i].x = this.trailDots[0].x;
+						this.trailDots[i].y = this.trailDots[0].y;
+					}
 				}
-				this.nextPointTimer = 0.2;
+				// this.trailDots = [];
+	
+				// for (var i = 0; i < this.totalPoints; i++) {
+				// 	let tPoint = new PIXI.Container();
+				// 	let gr = new PIXI.Graphics().beginFill(0xFFFFFF).drawCircle(0,0,this.trailTick/2);
+				// 	let gr2 = new PIXI.Graphics().beginFill(0x000000).drawCircle(0,-this.trailTick/2,2);
+				// 	tPoint.addChild(gr)
+				// 	tPoint.addChild(gr2)
+				// 	tPoint.alpha = 0.2
+				// 	tPoint.scale.set(0)
+				// 	this.trailDots.push(tPoint);
+				// }
+				this.nextPointTimer = 0;
 				this.drawPointsTexture();
 			}
 		}, {

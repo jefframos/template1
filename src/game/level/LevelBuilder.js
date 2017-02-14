@@ -33,6 +33,9 @@ export default class LevelBuilder{
 		}
 	}
 	getAnyPattern(singleLane){
+
+		console.log(this.game.levelPercentage);
+
 		let id =Math.floor( Math.random() * config.levels.length);
 		while(this.lastPattern.label == config.levels[id].label || config.levels[id].first || (singleLane && (!config.levels[id].singleLane || !config.levels[id].straight))){
 			 id =Math.floor( Math.random() * config.levels.length);
