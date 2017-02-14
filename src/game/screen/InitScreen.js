@@ -101,24 +101,24 @@ export default class InitScreen extends Screen{
 
 		if(entity.velocity.x > 0){
 			if(entity.x > config.width){
-				entity.velocity.x *= -1;
+				entity.velocity.x *= -0.5;
 				entity.x += entity.velocity.x * delta;
 			}
 		}else if(entity.velocity.x < 0){
 			if(entity.x < 0){
-				entity.velocity.x *= -1;
+				entity.velocity.x *= -0.5;
 				entity.x += entity.velocity.x * delta
 			}
 		}
 
 		if(entity.velocity.y > 0){
 			if(entity.y > config.height){
-				entity.velocity.y *= -1;
+				entity.velocity.y *= -0.5;
 				entity.y += entity.velocity.y * delta;
 			}
 		}else if(entity.velocity.y < 0){
 			if(entity.y < 0){
-				entity.velocity.y *= -1;
+				entity.velocity.y *= -0.5;
 				entity.y += entity.velocity.y * delta;
 			}
 		}
