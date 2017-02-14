@@ -38184,7 +38184,7 @@
 			value: function update(delta) {
 				_get(InitScreen.prototype.__proto__ || Object.getPrototypeOf(InitScreen.prototype), 'update', this).call(this, delta);
 	
-				this.mousePosition = renderer.plugins.interaction.mouse.global;
+				this.mousePosition = renderer.plugins.interaction.pointer.global;
 				// if(this.currentTrail)
 				this.verifyInterception();
 				for (var i = this.trailPool.length - 1; i >= 0; i--) {
@@ -38280,7 +38280,7 @@
 				// let angSpeed = this.ball.rotation - angleColision;
 				// this.ball.rotation += angleColision// * 0.5;
 				var force = _utils2.default.distance(this.firstPoint.x, this.firstPoint.y, this.secPoint.x, this.secPoint.y) * 0.01;
-				console.log(force);
+				// console.log(force);
 				this.ball.rotationSpeed = angSpeed * 1; // * 0.5;
 				this.ball.velocity.x = 0;
 				this.ball.velocity.y = 0;
@@ -38295,6 +38295,8 @@
 			value: function onTapUp() {
 				this.currentTrail = null;
 				this.tapping = false;
+	
+				// console.log(renderer.plugins.interaction);
 			}
 		}, {
 			key: 'onTapDown',
