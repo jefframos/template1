@@ -1,6 +1,8 @@
 export default {
-	width: window.innerWidth/2,
-	height: window.innerHeight/2,
+	// width: window.innerWidth/2,
+	width: 414,
+	height: 736,
+	// height: window.innerHeight/2,
 	webgl: true,
 	tileWidth: true,
 	effectsLayer:null,
