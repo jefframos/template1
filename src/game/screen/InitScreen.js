@@ -83,9 +83,10 @@ export default class InitScreen extends Screen{
 
 		this.trailPool = [];
 
-		this.goal = new PIXI.Graphics().beginFill(0x023548).drawRect(-500,-400,1000, 400);
+		this.goal = PIXI.Sprite.fromImage('assets/images/goal.png');//new PIXI.Graphics().beginFill(0x023548).drawRect(-500,-400,1000, 400);
 		this.addChild(this.goal);
-		this.goal.x = config.width / 2
+		this.goal.anchor.set(0.5, 0.9)
+		this.goal.x = config.width / 2 + 16
 		this.goal.y = 200
 		this.goal.alpha = 0.5
 	}

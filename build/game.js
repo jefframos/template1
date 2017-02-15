@@ -37732,7 +37732,7 @@
 	
 	PIXI.loader
 	// .add('./assets/map.json')
-	.add('./assets/images/salsicha.json').add('./assets/images/bg.png').add('./assets/images/ringDisplaceMap.jpg').add('./assets/images/onion.png')
+	.add('./assets/images/salsicha.json').add('./assets/images/bg.png').add('./assets/images/ringDisplaceMap.jpg').add('./assets/images/onion.png').add('./assets/images/goal.png')
 	// .add('./assets/images/ui.json')
 	.add('./assets/fonts/luckiestguy-webfont.woff').add('./assets/fonts/luckiestguy-webfont.woff2').add('./assets/fonts/stylesheet.css').add('./assets/fonts/specimen_files/specimen_stylesheet.css').load(configGame);
 	
@@ -38130,9 +38130,10 @@
 	
 				this.trailPool = [];
 	
-				this.goal = new PIXI.Graphics().beginFill(0x023548).drawRect(-500, -400, 1000, 400);
+				this.goal = PIXI.Sprite.fromImage('assets/images/goal.png'); //new PIXI.Graphics().beginFill(0x023548).drawRect(-500,-400,1000, 400);
 				this.addChild(this.goal);
-				this.goal.x = _config2.default.width / 2;
+				this.goal.anchor.set(0.5, 0.9);
+				this.goal.x = _config2.default.width / 2 + 16;
 				this.goal.y = 200;
 				this.goal.alpha = 0.5;
 			}

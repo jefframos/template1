@@ -13,6 +13,7 @@ PIXI.loader
 	.add('./assets/images/bg.png')
 	.add('./assets/images/ringDisplaceMap.jpg')
 	.add('./assets/images/onion.png')
+	.add('./assets/images/goal.png')
 	// .add('./assets/images/ui.json')
 	.add('./assets/fonts/luckiestguy-webfont.woff')
 	.add('./assets/fonts/luckiestguy-webfont.woff2')
