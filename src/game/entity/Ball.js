@@ -16,7 +16,7 @@ export default class Ball extends PIXI.Container {
         this.speedScale = 1;
         this.starterScale = 0.5;
         this.radius = radius;
-        this.externalRadius = this.radius*1.1;
+        this.externalRadius = this.radius*1;
         this.static = false;
         this.side = 1;
         this.maxLife = 5;
@@ -26,7 +26,7 @@ export default class Ball extends PIXI.Container {
         this.spriteVelocity = {x:0, y:0};
         this.spriteGravityStandard = 2000;
         this.spriteGravity = 2000;
-        this.shootYSpeed = -750;
+        this.shootYSpeed = -630;
         this.spriteDirection = 1;
 
 
@@ -42,7 +42,7 @@ export default class Ball extends PIXI.Container {
         this.spriteContainer.addChild(this.sprite);
         this.sprite.anchor.set(0.5);
         console.log(this.radius, this.sprite.width);
-        this.sprite.scale.set(this.radius / 25);
+        this.sprite.scale.set(this.radius / 150);
         // }
 
         console.log(this.container.skew.scope);
@@ -59,11 +59,11 @@ export default class Ball extends PIXI.Container {
 
     shoot(force) {
         this.shooting = true;
-        this.rotationInfluence.x = this.rotationSpeed * 500;
+        this.rotationInfluence.x = this.rotationSpeed * 850;
         this.spriteVelocity.y = Math.abs(this.spriteVelocity.y);
         this.spriteVelocity.y += this.shootYSpeed * force*0.5;
 
-        this.spriteGravityStandard = this.spriteGravity* force*0.5
+        this.spriteGravity = this.spriteGravityStandard * force*0.5
 
         console.log(force);
 

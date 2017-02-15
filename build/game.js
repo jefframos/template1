@@ -46710,7 +46710,7 @@
 	        _this.speedScale = 1;
 	        _this.starterScale = 0.5;
 	        _this.radius = radius;
-	        _this.externalRadius = _this.radius * 1.1;
+	        _this.externalRadius = _this.radius * 1;
 	        _this.static = false;
 	        _this.side = 1;
 	        _this.maxLife = 5;
@@ -46720,7 +46720,7 @@
 	        _this.spriteVelocity = { x: 0, y: 0 };
 	        _this.spriteGravityStandard = 2000;
 	        _this.spriteGravity = 2000;
-	        _this.shootYSpeed = -750;
+	        _this.shootYSpeed = -630;
 	        _this.spriteDirection = 1;
 	
 	        _this.container = new PIXI.Container();
@@ -46735,7 +46735,7 @@
 	        _this.spriteContainer.addChild(_this.sprite);
 	        _this.sprite.anchor.set(0.5);
 	        console.log(_this.radius, _this.sprite.width);
-	        _this.sprite.scale.set(_this.radius / 25);
+	        _this.sprite.scale.set(_this.radius / 150);
 	        // }
 	
 	        console.log(_this.container.skew.scope);
@@ -46754,11 +46754,11 @@
 	        key: 'shoot',
 	        value: function shoot(force) {
 	            this.shooting = true;
-	            this.rotationInfluence.x = this.rotationSpeed * 500;
+	            this.rotationInfluence.x = this.rotationSpeed * 850;
 	            this.spriteVelocity.y = Math.abs(this.spriteVelocity.y);
 	            this.spriteVelocity.y += this.shootYSpeed * force * 0.5;
 	
-	            this.spriteGravityStandard = this.spriteGravity * force * 0.5;
+	            this.spriteGravity = this.spriteGravityStandard * force * 0.5;
 	
 	            console.log(force);
 	
