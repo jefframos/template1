@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import config  from '../../config';
 export default class Ball extends PIXI.Container {
 
     constructor(game, radius = 20) {
@@ -22,40 +23,72 @@ export default class Ball extends PIXI.Container {
         this.life = 5;
         this.collidable = true;
 
+        this.spriteVelocity = {x:0, y:0};
+        this.spriteGravityStandard = 2000;
+        this.spriteGravity = 2000;
+        this.shootYSpeed = -750;
+        this.spriteDirection = 1;
+
 
         this.container = new PIXI.Container();
         this.addChild(this.container);
 
+        this.spriteContainer = new PIXI.Container();
+        this.container.addChild(this.spriteContainer);
+
         // if(this.radius > 20){
-            this.sprite = new PIXI.Sprite(PIXI.Texture.from('assets/images/onion.png'));
-            this.container.addChild(this.sprite);
-            this.sprite.anchor.set(0.5);
-            console.log(this.radius, this.sprite.width);
-            this.sprite.scale.set(this.radius / 50);
+
+        this.sprite = PIXI.Sprite.fromImage('assets/images/onion.png');
+        this.spriteContainer.addChild(this.sprite);
+        this.sprite.anchor.set(0.5);
+        console.log(this.radius, this.sprite.width);
+        this.sprite.scale.set(this.radius / 25);
         // }
 
-        // this.externalColisionCircle = new PIXI.Graphics();
-        // this.externalColisionCircle.lineStyle(1,0xFFFF00);
-        // this.externalColisionCircle.drawCircle(0,0,this.radius);
-        // this.externalColisionCircle.alpha = 0.8;
-        // this.container.addChild(this.externalColisionCircle);
+        console.log(this.container.skew.scope);
+        
+        this.externalColisionCircle = new PIXI.Graphics();
+        this.externalColisionCircle.lineStyle(1,0xFFFF00);
+        this.externalColisionCircle.drawCircle(0,0,this.radius);
+        this.externalColisionCircle.alpha = 0.8;
+        this.container.addChild(this.externalColisionCircle);
 
         this.shooting = false;
     }
    
 
-    shoot() {
+    shoot(force) {
         this.shooting = true;
-        this.rotationInfluence.x = this.rotationSpeed * 1000;
-        console.log(this.rotationSpeed);
-        console.log(this.rotationInfluence);
+        this.rotationInfluence.x = this.rotationSpeed * 500;
+        this.spriteVelocity.y = Math.abs(this.spriteVelocity.y);
+        this.spriteVelocity.y += this.shootYSpeed * force*0.5;
+
+        this.spriteGravityStandard = this.spriteGravity* force*0.5
+
+        console.log(force);
+
+        
+        this.spriteDirection = 1;
+        this.sprite.y = 0;
     }
     reset() {
         this.virtualVelocity = {x:0,y:0};
         this.velocity = {x:0,y:0};
+
         this.rotationInfluence = {x:0,y:0};
         this.rotationSpeed = 0;
         this.shooting = false;
+
+        if(Math.random() < 0.5){
+            this.spriteVelocity = {x:0, y:0};
+            this.spriteContainer.y = 0;
+            this.x = config.width / 2;
+        }else{
+            this.spriteContainer.y = - Math.random() * 150;
+            this.spriteVelocity.y = Math.abs(this.spriteVelocity.y);
+            this.virtualVelocity.x = -this.speed.x;
+            this.velocity.x = -this.speed.x;
+        }
     }
     getRadius() {
         return this.standardScale * this.radius;
@@ -65,13 +98,22 @@ export default class Ball extends PIXI.Container {
     }
 
     update ( delta ) {
+        // delta*= 0.2
+
         this.x += this.velocity.x * delta * this.scale.x;
         this.y += this.velocity.y * delta * this.scale.y;
+
+        let ang = Math.atan2(this.velocity.y, this.velocity.x)
+        //this.container.skew.x = this.x - config.width / 2//Math.sin(ang)
+        //this.container.skew.y = 0//Math.cos(ang)
+        // console.log(ang * 180 / 3.14);
+        TweenLite.to(this.spriteContainer.scale, 0.5, {x:Math.sin(ang)*0.2 + 1, y:Math.cos(ang)*0.2+1})
+        //this.spriteContainer.scale.set(Math.sin(ang)*0.2 + 1, Math.cos(ang)*0.2+1)
 
         let percentage = Math.abs((Math.abs(this.velocity.x) + Math.abs(this.velocity.y)) / 
             (Math.abs(this.speed.x) + Math.abs(this.speed.y)));
         // console.log(this.rotationSpeed);
-        this.rotation += this.rotationSpeed * percentage * 0.5;
+        this.sprite.rotation += this.rotationSpeed * percentage * 0.5;
 
         if(this.shooting && percentage == 0){
             this.game.reset();
@@ -79,7 +121,18 @@ export default class Ball extends PIXI.Container {
         if(percentage){
             this.velocity.x += this.rotationInfluence.x * delta * percentage;
 
+            if(this.spriteContainer.y > 0){
+                this.spriteVelocity.y = this.shootYSpeed
+            }
             // console.log(this.rotationInfluence.x);
+            this.spriteContainer.x += this.spriteVelocity.x * delta * this.scale.x;
+            this.spriteContainer.y += this.spriteVelocity.y * delta * this.scale.y;
+            this.spriteVelocity.y += this.spriteGravity * delta;
+
+            // console.log(this.spriteVelocity.y);
+
+            // if(this.spriteVelocity.y < 0){
+            // }
             // this.velocity.y += Math.cos(this.rotation);
         }
 

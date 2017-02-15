@@ -38129,6 +38129,12 @@
 				this.currentTrail = false;
 	
 				this.trailPool = [];
+	
+				this.goal = new PIXI.Graphics().beginFill(0x023548).drawRect(-500, -400, 1000, 400);
+				this.addChild(this.goal);
+				this.goal.x = _config2.default.width / 2;
+				this.goal.y = 200;
+				this.goal.alpha = 0.5;
 			}
 		}, {
 			key: 'getTrail',
@@ -38149,11 +38155,10 @@
 		}, {
 			key: 'reset',
 			value: function reset() {
+				this.paused = false;
 				this.ball.x = _config2.default.width * 1.1;
 				this.ball.y = _config2.default.height - 180;
 				this.ball.reset();
-				this.ball.virtualVelocity.x = -this.ball.speed.x;
-				this.ball.velocity.x = -this.ball.speed.x;
 			}
 		}, {
 			key: 'collideBounds',
@@ -38177,12 +38182,15 @@
 						entity.y += entity.velocity.y * delta;
 					}
 				} else if (entity.velocity.y < 0) {
-					if (entity.y < -_config2.default.height * 0.05) {
+					if (entity.y < this.goal.y - 10) {
 						entity.velocity.y *= -0.5;
 	
 						entity.y += entity.velocity.y * delta;
 	
-						this.reset();
+						this.paused = true;
+						setTimeout(function () {
+							this.reset();
+						}.bind(this), 500);
 					}
 				}
 			}
@@ -38200,22 +38208,31 @@
 		}, {
 			key: 'update',
 			value: function update(delta) {
-				_get(InitScreen.prototype.__proto__ || Object.getPrototypeOf(InitScreen.prototype), 'update', this).call(this, delta);
-	
-				var perspectiveFactor = 1 - this.ball.y / _config2.default.height;
-				this.ball.scale.set(1.2 - perspectiveFactor * 0.8);
-	
-				this.mousePosition = renderer.plugins.interaction.pointer.global;
-				// if(this.currentTrail)
-				this.verifyInterception();
+				if (this.currentTrail) {
+					this.currentTrail.update(delta, this.mousePosition);
+				}
 				for (var i = this.trailPool.length - 1; i >= 0; i--) {
 					if (!this.trailPool[i].killed && this.trailPool[i] != this.currentTrail) {
 						this.trailPool[i].update(delta, null);
 					}
 				}
-				if (this.currentTrail) {
-					this.currentTrail.update(delta, this.mousePosition);
+				if (this.paused) {
+					return;
 				}
+				_get(InitScreen.prototype.__proto__ || Object.getPrototypeOf(InitScreen.prototype), 'update', this).call(this, delta);
+	
+				this.children.sort(_utils2.default.depthCompare);
+	
+				var perspectiveFactor = 1 - this.ball.y / _config2.default.height;
+				// console.log(perspectiveFactor);
+				this.ball.scale.set(1.1 - perspectiveFactor * 1);
+	
+				perspectiveFactor = 1 - this.goal.y / _config2.default.height;
+				this.goal.scale.set(1.1 - perspectiveFactor * 1);
+	
+				this.mousePosition = renderer.plugins.interaction.pointer.global;
+				// if(this.currentTrail)
+				this.verifyInterception();
 	
 				// this.collide(delta, this.ball, this.ball2)
 				// this.collide(delta, this.ball, this.ball3)
@@ -38276,6 +38293,9 @@
 		}, {
 			key: 'verifyInterception',
 			value: function verifyInterception() {
+				if (this.firstPoint && this.firstPoint.y < this.mousePosition.y) {
+					return;
+				}
 				if (!this.tapping) {
 					return;
 				}
@@ -38310,7 +38330,11 @@
 	
 				this.ball.virtualVelocity.x = 0;
 				this.ball.virtualVelocity.y = 0;
-				this.ball.shoot();
+				this.ball.shoot(force);
+				this.paused = true;
+				setTimeout(function () {
+					this.paused = false;
+				}.bind(this), 200);
 			}
 		}, {
 			key: 'onTapUp',
@@ -46650,6 +46674,12 @@
 	
 	var PIXI = _interopRequireWildcard(_pixi);
 	
+	var _config = __webpack_require__(184);
+	
+	var _config2 = _interopRequireDefault(_config);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -46687,22 +46717,34 @@
 	        _this.life = 5;
 	        _this.collidable = true;
 	
+	        _this.spriteVelocity = { x: 0, y: 0 };
+	        _this.spriteGravityStandard = 2000;
+	        _this.spriteGravity = 2000;
+	        _this.shootYSpeed = -750;
+	        _this.spriteDirection = 1;
+	
 	        _this.container = new PIXI.Container();
 	        _this.addChild(_this.container);
 	
+	        _this.spriteContainer = new PIXI.Container();
+	        _this.container.addChild(_this.spriteContainer);
+	
 	        // if(this.radius > 20){
-	        _this.sprite = new PIXI.Sprite(PIXI.Texture.from('assets/images/onion.png'));
-	        _this.container.addChild(_this.sprite);
+	
+	        _this.sprite = PIXI.Sprite.fromImage('assets/images/onion.png');
+	        _this.spriteContainer.addChild(_this.sprite);
 	        _this.sprite.anchor.set(0.5);
 	        console.log(_this.radius, _this.sprite.width);
-	        _this.sprite.scale.set(_this.radius / 50);
+	        _this.sprite.scale.set(_this.radius / 25);
 	        // }
 	
-	        // this.externalColisionCircle = new PIXI.Graphics();
-	        // this.externalColisionCircle.lineStyle(1,0xFFFF00);
-	        // this.externalColisionCircle.drawCircle(0,0,this.radius);
-	        // this.externalColisionCircle.alpha = 0.8;
-	        // this.container.addChild(this.externalColisionCircle);
+	        console.log(_this.container.skew.scope);
+	
+	        _this.externalColisionCircle = new PIXI.Graphics();
+	        _this.externalColisionCircle.lineStyle(1, 0xFFFF00);
+	        _this.externalColisionCircle.drawCircle(0, 0, _this.radius);
+	        _this.externalColisionCircle.alpha = 0.8;
+	        _this.container.addChild(_this.externalColisionCircle);
 	
 	        _this.shooting = false;
 	        return _this;
@@ -46710,20 +46752,39 @@
 	
 	    _createClass(Ball, [{
 	        key: 'shoot',
-	        value: function shoot() {
+	        value: function shoot(force) {
 	            this.shooting = true;
-	            this.rotationInfluence.x = this.rotationSpeed * 1000;
-	            console.log(this.rotationSpeed);
-	            console.log(this.rotationInfluence);
+	            this.rotationInfluence.x = this.rotationSpeed * 500;
+	            this.spriteVelocity.y = Math.abs(this.spriteVelocity.y);
+	            this.spriteVelocity.y += this.shootYSpeed * force * 0.5;
+	
+	            this.spriteGravityStandard = this.spriteGravity * force * 0.5;
+	
+	            console.log(force);
+	
+	            this.spriteDirection = 1;
+	            this.sprite.y = 0;
 	        }
 	    }, {
 	        key: 'reset',
 	        value: function reset() {
 	            this.virtualVelocity = { x: 0, y: 0 };
 	            this.velocity = { x: 0, y: 0 };
+	
 	            this.rotationInfluence = { x: 0, y: 0 };
 	            this.rotationSpeed = 0;
 	            this.shooting = false;
+	
+	            if (Math.random() < 0.5) {
+	                this.spriteVelocity = { x: 0, y: 0 };
+	                this.spriteContainer.y = 0;
+	                this.x = _config2.default.width / 2;
+	            } else {
+	                this.spriteContainer.y = -Math.random() * 150;
+	                this.spriteVelocity.y = Math.abs(this.spriteVelocity.y);
+	                this.virtualVelocity.x = -this.speed.x;
+	                this.velocity.x = -this.speed.x;
+	            }
 	        }
 	    }, {
 	        key: 'getRadius',
@@ -46738,12 +46799,21 @@
 	    }, {
 	        key: 'update',
 	        value: function update(delta) {
+	            // delta*= 0.2
+	
 	            this.x += this.velocity.x * delta * this.scale.x;
 	            this.y += this.velocity.y * delta * this.scale.y;
 	
+	            var ang = Math.atan2(this.velocity.y, this.velocity.x);
+	            //this.container.skew.x = this.x - config.width / 2//Math.sin(ang)
+	            //this.container.skew.y = 0//Math.cos(ang)
+	            // console.log(ang * 180 / 3.14);
+	            TweenLite.to(this.spriteContainer.scale, 0.5, { x: Math.sin(ang) * 0.2 + 1, y: Math.cos(ang) * 0.2 + 1 });
+	            //this.spriteContainer.scale.set(Math.sin(ang)*0.2 + 1, Math.cos(ang)*0.2+1)
+	
 	            var percentage = Math.abs((Math.abs(this.velocity.x) + Math.abs(this.velocity.y)) / (Math.abs(this.speed.x) + Math.abs(this.speed.y)));
 	            // console.log(this.rotationSpeed);
-	            this.rotation += this.rotationSpeed * percentage * 0.5;
+	            this.sprite.rotation += this.rotationSpeed * percentage * 0.5;
 	
 	            if (this.shooting && percentage == 0) {
 	                this.game.reset();
@@ -46751,7 +46821,18 @@
 	            if (percentage) {
 	                this.velocity.x += this.rotationInfluence.x * delta * percentage;
 	
+	                if (this.spriteContainer.y > 0) {
+	                    this.spriteVelocity.y = this.shootYSpeed;
+	                }
 	                // console.log(this.rotationInfluence.x);
+	                this.spriteContainer.x += this.spriteVelocity.x * delta * this.scale.x;
+	                this.spriteContainer.y += this.spriteVelocity.y * delta * this.scale.y;
+	                this.spriteVelocity.y += this.spriteGravity * delta;
+	
+	                // console.log(this.spriteVelocity.y);
+	
+	                // if(this.spriteVelocity.y < 0){
+	                // }
 	                // this.velocity.y += Math.cos(this.rotation);
 	            }
 	

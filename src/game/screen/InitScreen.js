@@ -82,6 +82,12 @@ export default class InitScreen extends Screen{
 		this.currentTrail = false;
 
 		this.trailPool = [];
+
+		this.goal = new PIXI.Graphics().beginFill(0x023548).drawRect(-500,-400,1000, 400);
+		this.addChild(this.goal);
+		this.goal.x = config.width / 2
+		this.goal.y = 200
+		this.goal.alpha = 0.5
 	}
 
 	getTrail(){
@@ -99,11 +105,11 @@ export default class InitScreen extends Screen{
 		return trail;
 	}
 	reset(){
+		this.paused = false;
 		this.ball.x = config.width * 1.1;
         this.ball.y = config.height - 180;
         this.ball.reset();
-        this.ball.virtualVelocity.x = -this.ball.speed.x;
-        this.ball.velocity.x = -this.ball.speed.x;
+        
 	}
 	collideBounds(delta, entity){
 
@@ -125,12 +131,14 @@ export default class InitScreen extends Screen{
 				entity.y += entity.velocity.y * delta;
 			}
 		}else if(entity.velocity.y < 0){
-			if(entity.y < -config.height * 0.05){
+			if(entity.y < this.goal.y -10){
 				entity.velocity.y *= -0.5;
 
 				entity.y += entity.velocity.y * delta;
 
-				this.reset();
+				this.paused = true;
+				setTimeout(function() {this.reset();}.bind(this), 500);
+				
 			}
 		}
 	}
@@ -146,22 +154,31 @@ export default class InitScreen extends Screen{
 	}
 	
 	update(delta){
-		super.update(delta);
-
-		let perspectiveFactor = 1-this.ball.y / config.height
-		this.ball.scale.set(1.2 - perspectiveFactor*0.8)
-
-		this.mousePosition = renderer.plugins.interaction.pointer.global;
-		// if(this.currentTrail)
-		this.verifyInterception();
+		if(this.currentTrail){
+			this.currentTrail.update(delta, this.mousePosition)
+		}
 		for (var i = this.trailPool.length - 1; i >= 0; i--) {
 			if(!this.trailPool[i].killed && this.trailPool[i] != this.currentTrail){
 				this.trailPool[i].update(delta, null);
 			}
 		}
-		if(this.currentTrail){
-			this.currentTrail.update(delta, this.mousePosition)
+		if(this.paused){
+			return
 		}
+		super.update(delta);
+
+		this.children.sort(utils.depthCompare);
+
+		let perspectiveFactor = 1-this.ball.y / config.height
+		// console.log(perspectiveFactor);
+		this.ball.scale.set(1.1 - perspectiveFactor*1)
+
+		perspectiveFactor = 1-this.goal.y / config.height
+		this.goal.scale.set(1.1 - perspectiveFactor*1)
+
+		this.mousePosition = renderer.plugins.interaction.pointer.global;
+		// if(this.currentTrail)
+		this.verifyInterception();
 
 		// this.collide(delta, this.ball, this.ball2)
 		// this.collide(delta, this.ball, this.ball3)
@@ -217,6 +234,9 @@ export default class InitScreen extends Screen{
 	    return ret;
 	}
 	verifyInterception(){
+		if(this.firstPoint && this.firstPoint.y < this.mousePosition.y){
+			return
+		}
 		if(!this.tapping){
 			return;
 		}
@@ -251,7 +271,9 @@ export default class InitScreen extends Screen{
 
         this.ball.virtualVelocity.x = 0;
         this.ball.virtualVelocity.y = 0;
-        this.ball.shoot();
+        this.ball.shoot(force);
+        this.paused = true;
+        setTimeout(function() {this.paused = false;}.bind(this), 200);
 	}
 	onTapUp(){
 		this.currentTrail = null;
